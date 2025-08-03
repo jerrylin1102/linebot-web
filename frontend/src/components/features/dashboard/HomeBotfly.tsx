@@ -266,12 +266,6 @@ const HomeBotfly: React.FC<HomeBotflyProps> = ({ user }) => {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">我的 Bot</h2>
-          <Button asChild size="sm">
-            <Link to="/bots/create">
-              <Plus className="h-4 w-4 mr-2" />
-              新增 Bot
-            </Link>
-          </Button>
         </div>
 
         {error && (
