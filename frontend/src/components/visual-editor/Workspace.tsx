@@ -208,14 +208,28 @@ const Workspace: React.FC<WorkspaceProps> = ({
     });
   }, [logicBlocks, flexBlocks, normalizeBlocks, toast]);
 
-  // 在積木變更時驗證工作區 - 使用防抖機制避免頻繁驗證
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      validateCurrentWorkspace();
-    }, 500); // 增加到 500ms 延遲，進一步減少頻繁驗證
+  // 在積木變更時驗證工作區 - 使用更可靠的防抖機制
+  const debouncedValidation = React.useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout | null = null;
+      
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        
+        timeoutId = setTimeout(() => {
+          validateCurrentWorkspace();
+          timeoutId = null;
+        }, 500);
+      };
+    })(),
+    [validateCurrentWorkspace]
+  );
 
-    return () => clearTimeout(timeoutId);
-  }, [logicBlocks, flexBlocks, validateCurrentWorkspace]); // 包含必要的依賴項
+  React.useEffect(() => {
+    debouncedValidation();
+  }, [logicBlocks, flexBlocks, debouncedValidation]);
 
   const handleLogicDrop = useCallback(
     (item: UnifiedDropItem | LegacyDropItem) => {

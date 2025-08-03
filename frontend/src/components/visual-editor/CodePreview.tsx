@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Copy, Download } from "lucide-react";
-import LineBotCodeGenerator from "../../utils/codeGenerator";
+import { generateUnifiedCode } from "../../utils/unifiedCodeGenerator";
 
 interface BlockData {
   [key: string]: unknown;
@@ -18,16 +18,58 @@ interface CodePreviewProps {
 
 const CodePreview: React.FC<CodePreviewProps> = ({ blocks }) => {
   const [generatedCode, setGeneratedCode] = useState("");
-  const [codeGenerator] = useState(new LineBotCodeGenerator());
 
   useEffect(() => {
     if (blocks && blocks.length > 0) {
-      const code = codeGenerator.generateCode(blocks);
-      setGeneratedCode(code);
+      try {
+        // 使用統一代碼生成器，將舊格式積木轉換後生成代碼
+        const code = generateUnifiedCode(blocks);
+        setGeneratedCode(code);
+      } catch (error) {
+        console.error("代碼生成錯誤:", error);
+        setGeneratedCode(`# 代碼生成過程中發生錯誤
+# 錯誤信息：${error instanceof Error ? error.message : '未知錯誤'}
+# 請檢查積木配置或聯繫開發人員
+
+# 以下是基本的 LINE Bot 模板
+from flask import Flask, request, abort
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
+
+app = Flask(__name__)
+
+# 請替換為您的 LINE Bot 憑證
+line_bot_api = LineBotApi('YOUR_CHANNEL_ACCESS_TOKEN')
+handler = WebhookHandler('YOUR_CHANNEL_SECRET')
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    signature = request.headers['X-Line-Signature']
+    body = request.get_data(as_text=True)
+    
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+    
+    return 'OK'
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text="Hello, World!")
+    )
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000, debug=True)
+`);
+      }
     } else {
       setGeneratedCode("# 請先在邏輯編輯器中加入積木來生成程式碼");
     }
-  }, [blocks, codeGenerator]);
+  }, [blocks]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedCode);

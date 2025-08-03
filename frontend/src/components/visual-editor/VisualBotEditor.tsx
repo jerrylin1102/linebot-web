@@ -5,6 +5,7 @@ import DragDropProvider from "./DragDropProvider";
 import Workspace from "./Workspace";
 import ProjectManager from "./ProjectManager";
 import SaveStatusIndicator from "./SaveStatusIndicator";
+import InitializationStatusIndicator from "./InitializationStatusIndicator";
 import { SaveStatus } from "../../types/saveStatus";
 import { Button } from "../ui/button";
 import { UnifiedBlock } from "../../types/block";
@@ -471,6 +472,10 @@ export const VisualBotEditor: React.FC = () => {
                 <div className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                   v{projectVersion} - 統一積木系統
                 </div>
+                <InitializationStatusIndicator 
+                  showDetails={false}
+                  className="mr-2"
+                />
                 <SaveStatusIndicator
                   status={saveStatus}
                   lastSavedTime={lastSavedTime}

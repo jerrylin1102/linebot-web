@@ -139,6 +139,47 @@ export const BLOCK_MIGRATION_RULES: BlockMigrationRule[] = [
     oldBlockType: "postback_event",
     newCategory: BlockCategory.EVENT,
   },
+  // 新的事件積木類型
+  {
+    oldBlockType: "text_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "image_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "audio_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "video_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "file_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "sticker_message_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "follow_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "unfollow_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "member_joined_event",
+    newCategory: BlockCategory.EVENT,
+  },
+  {
+    oldBlockType: "member_left_event",
+    newCategory: BlockCategory.EVENT,
+  },
 
   // 回覆積木遷移
   {
@@ -155,6 +196,31 @@ export const BLOCK_MIGRATION_RULES: BlockMigrationRule[] = [
   },
   {
     oldBlockType: "image_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  // 新的回覆積木類型
+  {
+    oldBlockType: "audio_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  {
+    oldBlockType: "video_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  {
+    oldBlockType: "location_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  {
+    oldBlockType: "sticker_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  {
+    oldBlockType: "template_reply",
+    newCategory: BlockCategory.REPLY,
+  },
+  {
+    oldBlockType: "quickreply_reply",
     newCategory: BlockCategory.REPLY,
   },
 
@@ -247,6 +313,23 @@ export const BLOCK_MIGRATION_RULES: BlockMigrationRule[] = [
   },
   {
     oldBlockType: "flex_icon",
+    newCategory: BlockCategory.FLEX_CONTENT,
+  },
+  // 新的Flex內容積木類型
+  {
+    oldBlockType: "video",
+    newCategory: BlockCategory.FLEX_CONTENT,
+  },
+  {
+    oldBlockType: "flex_video",
+    newCategory: BlockCategory.FLEX_CONTENT,
+  },
+  {
+    oldBlockType: "span",
+    newCategory: BlockCategory.FLEX_CONTENT,
+  },
+  {
+    oldBlockType: "flex_span",
     newCategory: BlockCategory.FLEX_CONTENT,
   },
 

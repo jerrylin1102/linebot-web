@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useDrop } from "react-dnd";
 import DroppedBlock from "./DroppedBlock";
+import ErrorBoundary from "../ui/ErrorBoundary";
+import { useErrorHandler } from "../../hooks/useErrorHandler";
+import BlockErrorHandler from "../../services/BlockErrorHandler";
 import {
   UnifiedBlock,
   UnifiedDropItem,
@@ -38,6 +41,7 @@ interface DropZoneProps {
   onMove?: (dragIndex: number, hoverIndex: number) => void; // 新增：移動積木
   onInsert?: (index: number, item: UnifiedDropItem | LegacyDropItem) => void; // 新增：插入積木
   showCompatibilityInfo?: boolean; // 是否顯示相容性資訊
+  onError?: (error: Error) => void; // 錯誤處理回調
 }
 
 const DropZone: React.FC<DropZoneProps> = ({
@@ -50,12 +54,16 @@ const DropZone: React.FC<DropZoneProps> = ({
   onMove,
   onInsert,
   showCompatibilityInfo = true,
+  onError,
 }) => {
   const [dragValidation, setDragValidation] =
     useState<BlockValidationResult | null>(null);
   const [hoveredItem, setHoveredItem] = useState<
     UnifiedDropItem | LegacyDropItem | null
   >(null);
+  const [hasError, setHasError] = useState(false);
+  const { handleErrorAsync } = useErrorHandler();
+  const blockErrorHandler = BlockErrorHandler.getInstance();
 
   // 轉換舊格式積木到統一格式進行相容性檢查
   const normalizedBlocks: UnifiedBlock[] = blocks.map((block) => {
@@ -130,19 +138,34 @@ const DropZone: React.FC<DropZoneProps> = ({
           console.log("🔍 新積木相容性檢查結果:", validation);
           setDragValidation(validation);
         } catch (error) {
-          console.error("❌ 積木相容性檢查失敗:", error, {
-            item: item,
-            context: context,
-            itemType:
-              "category" in item
-                ? "unified"
-                : "index" in item
-                  ? "reorder"
-                  : "legacy",
-            errorMessage:
-              error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-          });
+          console.error("❌ 積木相容性檢查失敗:", error);
+          
+          // 使用統一錯誤處理
+          handleErrorAsync(
+            async () => {
+              // 創建適當的積木對象進行錯誤處理
+              const blockForError = "category" in item 
+                ? { 
+                    id: `temp-${Date.now()}`, 
+                    blockType: (item as any).blockType || 'unknown',
+                    category: (item as any).category,
+                    blockData: (item as any).blockData || {},
+                    compatibility: (item as any).compatibility || []
+                  } as UnifiedBlock
+                : migrateBlock(item as LegacyDropItem);
+
+              await blockErrorHandler.handleCompatibilityError(
+                blockForError,
+                context,
+                { component: "DropZone", operation: "hover" }
+              );
+              throw error;
+            },
+            { component: "DropZone", operation: "compatibilityCheck" }
+          );
+
+          setHasError(true);
+          onError?.(error as Error);
 
           // 提供更詳細的錯誤處理
           setDragValidation({
@@ -231,24 +254,39 @@ const DropZone: React.FC<DropZoneProps> = ({
             console.warn("⚠️ onDrop 函數未定義或其他問題");
           }
         } catch (error) {
-          console.error("❌ 積木放置時發生錯誤:", error, {
-            item: item,
-            context: context,
-            itemType:
-              "category" in item
-                ? "unified"
-                : "index" in item
-                  ? "reorder"
-                  : "legacy",
-            errorMessage:
-              error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
-          });
-
-          // 即使發生錯誤，也嘗試執行放置操作（容錯機制）
+          console.error("❌ 積木放置時發生錯誤:", error);
+          
+          // 使用統一錯誤處理
           const isReorderOp = "index" in item;
           if (!isReorderOp) {
-            // 只對新積木執行容錯放置
+            handleErrorAsync(
+              async () => {
+                // 創建適當的積木對象進行錯誤處理
+                const blockForError = "category" in item 
+                  ? { 
+                      id: `temp-${Date.now()}`, 
+                      blockType: (item as any).blockType || 'unknown',
+                      category: (item as any).category,
+                      blockData: (item as any).blockData || {},
+                      compatibility: (item as any).compatibility || []
+                    } as UnifiedBlock
+                  : migrateBlock(item as LegacyDropItem);
+
+                await blockErrorHandler.handleDragDropError(
+                  blockForError,
+                  { x: 0, y: 0 }, // 簡化位置信息
+                  error instanceof Error ? error.message : "放置失敗",
+                  { component: "DropZone", operation: "drop" }
+                );
+                throw error;
+              },
+              { component: "DropZone", operation: "dropError" }
+            );
+
+            setHasError(true);
+            onError?.(error as Error);
+
+            // 容錯機制：嘗試執行放置操作
             console.log("🔄 嘗試容錯放置");
             if (onDrop) {
               try {
@@ -256,6 +294,7 @@ const DropZone: React.FC<DropZoneProps> = ({
                 console.log("✅ 容錯放置成功");
               } catch (fallbackError) {
                 console.error("❌ 容錯放置也失敗:", fallbackError);
+                onError?.(fallbackError as Error);
               }
             }
           }
@@ -368,14 +407,51 @@ const DropZone: React.FC<DropZoneProps> = ({
     );
   };
 
+  // 錯誤狀態渲染
+  if (hasError) {
+    return (
+      <ErrorBoundary level="section">
+        <div className="border-2 border-dashed border-red-300 rounded-lg p-4 h-full flex flex-col bg-red-50">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <h3 className="text-lg font-medium text-red-600">{title} - 錯誤</h3>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-600 mb-2">放置區域發生錯誤</p>
+              <button
+                onClick={() => {
+                  setHasError(false);
+                  setDragValidation(null);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                重試
+              </button>
+            </div>
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
   return (
-    <div
-      ref={drop}
-      className={`border-2 border-dashed rounded-lg p-4 h-full flex flex-col transition-all duration-200 ${getDropZoneStyle()}`}
+    <ErrorBoundary 
+      level="section"
+      onError={(error) => {
+        setHasError(true);
+        onError?.(error.originalError || new Error(error.message));
+      }}
     >
-      <h3 className="text-lg font-medium text-gray-600 mb-4 flex-shrink-0">
-        {title}
-      </h3>
+      <div
+        ref={drop}
+        className={`border-2 border-dashed rounded-lg p-4 h-full flex flex-col transition-all duration-200 ${getDropZoneStyle()}`}
+        data-testid={`drop-zone-${context}`}
+        data-context={context}
+      >
+        <h3 className="text-lg font-medium text-gray-600 mb-4 flex-shrink-0">
+          {title}
+        </h3>
 
       {/* 上下文提示 */}
       <div className="mb-4 text-sm text-gray-500 flex-shrink-0">
@@ -415,9 +491,10 @@ const DropZone: React.FC<DropZoneProps> = ({
         )}
       </div>
 
-      {/* 相容性反饋 */}
-      <div className="flex-shrink-0">{renderCompatibilityFeedback()}</div>
-    </div>
+        {/* 相容性反饋 */}
+        <div className="flex-shrink-0">{renderCompatibilityFeedback()}</div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

@@ -58,6 +58,30 @@ export interface BlockDefinition {
 
   /** 積木配置選項 */
   configOptions?: BlockConfigOption[];
+
+  /** 積木驗證配置 */
+  validation?: {
+    required?: string[];
+    rules?: Array<{
+      field: string;
+      type: "enum" | "pattern" | "range" | "custom";
+      values?: any[];
+      pattern?: RegExp;
+      min?: number;
+      max?: number;
+      message: string;
+      validator?: (value: any) => boolean;
+    }>;
+  };
+
+  /** 積木依賴關係 */
+  dependencies?: string[];
+
+  /** 是否為可選積木（載入失敗時不影響系統運行） */
+  optional?: boolean;
+
+  /** 積木優先級（影響載入順序） */
+  priority?: number;
 }
 
 /**
@@ -89,7 +113,7 @@ export interface BlockConfigOption {
   validation?: {
     min?: number;
     max?: number;
-    pattern?: string;
+    pattern?: string | RegExp;
     message?: string;
   };
 }

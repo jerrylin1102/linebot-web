@@ -113,18 +113,46 @@ const renderContent = (component: FlexComponent, index: React.Key) => {
       };
       return (
         <p key={index} className="truncate" style={style}>
-          {component.text}
+          {/* 如果有contents屬性，渲染span元素；否則顯示text */}
+          {component.contents && Array.isArray(component.contents) ? (
+            component.contents.map((spanElement, spanIndex) =>
+              renderContent(spanElement, `${index}-span-${spanIndex}`)
+            )
+          ) : (
+            component.text
+          )}
         </p>
       );
     }
     case "icon": {
-      // 支援 size, margin
+      // 支援 size, margin, position, offset等屬性
+      let iconSize = 20; // 預設大小
+      if (component.size) {
+        const sizeMap: Record<string, number> = {
+          xs: 16,
+          sm: 20,
+          md: 24,
+          lg: 28,
+          xl: 32,
+          xxl: 36,
+          "3xl": 40,
+          "4xl": 44,
+          "5xl": 48,
+        };
+        iconSize = sizeMap[component.size] || 20;
+      }
+
       const style: Record<string, string | number | undefined> = {
+        width: iconSize,
+        height: iconSize,
         margin: component.margin || undefined,
-        width: component.size || 20,
-        height: component.size || 20,
-        marginRight: "2px",
+        position: component.position || "relative",
+        top: component.offsetTop || undefined,
+        bottom: component.offsetBottom || undefined,
+        left: component.offsetStart || undefined,
+        right: component.offsetEnd || undefined,
       };
+      
       return (
         <img
           key={index}
@@ -248,6 +276,79 @@ const renderContent = (component: FlexComponent, index: React.Key) => {
       if (component.size === "lg") height = "24px";
       if (component.size === "xl") height = "40px";
       return <div key={index} style={{ height }}></div>;
+    }
+    case "video": {
+      // 支援 aspectRatio, aspectMode, backgroundColor, action, altContent
+      let aspectRatioStyle: Record<string, string | number> = {};
+      if (component.aspectRatio) {
+        const [w, h] = component.aspectRatio.split(":").map(Number);
+        if (w && h) {
+          aspectRatioStyle = {
+            aspectRatio: `${w} / ${h}`,
+            width: "100%",
+            height: "auto",
+          };
+        }
+      }
+      
+      const style: Record<string, string | number | undefined> = {
+        backgroundColor: component.backgroundColor || "#000",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        ...aspectRatioStyle,
+      };
+
+      return (
+        <div key={index} className="relative" style={style}>
+          {/* 預覽圖片 */}
+          {component.previewUrl && (
+            <img
+              src={component.previewUrl}
+              alt="video preview"
+              className="w-full h-full object-cover"
+              style={{
+                objectFit: component.aspectMode === "fit" ? "contain" : "cover",
+              }}
+            />
+          )}
+          {/* 播放按鈕覆蓋層 */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+            <div className="w-12 h-12 bg-white bg-opacity-80 rounded-full flex items-center justify-center">
+              <div className="w-0 h-0 border-l-4 border-l-gray-800 border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>
+            </div>
+          </div>
+          {/* 替代內容（預覽中不顯示，但可用於錯誤處理） */}
+        </div>
+      );
+    }
+    case "span": {
+      // 支援 size, weight, color, decoration, style - span只能在text的contents中使用
+      const style: Record<string, string | number | undefined> = {
+        color: component.color || undefined,
+        textDecoration: component.decoration || undefined,
+        fontWeight: component.weight || undefined,
+        fontStyle: component.style || undefined,
+        fontSize: component.size
+          ? component.size === "xl"
+            ? "1.25rem"
+            : component.size === "lg"
+              ? "1.125rem"
+              : component.size === "md"
+                ? "1rem"
+                : component.size === "sm"
+                  ? "0.875rem"
+                  : component.size === "xs"
+                    ? "0.75rem"
+                    : undefined
+          : undefined,
+      };
+      return (
+        <span key={index} style={style}>
+          {component.text}
+        </span>
+      );
     }
     case "filler": {
       // 空白填充
