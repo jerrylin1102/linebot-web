@@ -6,6 +6,7 @@
 import { Star } from "lucide-react";
 import { BlockDefinition } from "../types";
 import { BlockCategory, WorkspaceContext } from "../../../../types/block";
+import { LineAction } from "../../../../types/lineActions";
 
 export const iconContent: BlockDefinition = {
   id: "icon-content",
@@ -23,13 +24,14 @@ export const iconContent: BlockDefinition = {
     properties: {
       size: "md",
       margin: "none",
+      align: "start",
       position: "relative",
       offsetTop: "0px",
       offsetBottom: "0px", 
       offsetStart: "0px",
-      offsetEnd: "0px",
-      action: null
+      offsetEnd: "0px"
     },
+    action: null as LineAction | null,
   },
   tags: ["flex", "內容", "圖示", "裝飾", "視覺"],
   version: "1.0.0",
@@ -82,6 +84,18 @@ export const iconContent: BlockDefinition = {
       ]
     },
     {
+      key: "properties.align",
+      label: "水平對齊",
+      type: "select",
+      defaultValue: "start",
+      description: "設定圖示的水平對齊方式",
+      options: [
+        { label: "起始對齊", value: "start" },
+        { label: "結束對齊", value: "end" },
+        { label: "居中對齊", value: "center" }
+      ]
+    },
+    {
       key: "properties.position",
       label: "定位方式",
       type: "select", 
@@ -131,6 +145,15 @@ export const iconContent: BlockDefinition = {
       validation: {
         pattern: "^-?\\d+(\\.\\d+)?(px|%)?$"
       }
+    },
+    
+    // 互動設定
+    {
+      key: "action",
+      label: "點擊動作",
+      type: "action",
+      description: "設定點擊圖示時的互動行為",
+      component: "ActionSelector"
     }
   ]
 };

@@ -10,6 +10,7 @@ import {
   DEFAULT_IMAGE_PROPERTIES, 
   ImageAdvancedProperties 
 } from "../../../../types/flexProperties";
+import { LineAction } from "../../../../types/lineActions";
 
 export const imageContent: BlockDefinition = {
   id: "image-content",
@@ -32,6 +33,7 @@ export const imageContent: BlockDefinition = {
       align: "center",
       gravity: "center"
     } as ImageAdvancedProperties,
+    action: null as LineAction | null,
   },
   tags: ["flex", "內容", "圖片", "進階", "效果"],
   version: "2.0.0",
@@ -248,6 +250,15 @@ export const imageContent: BlockDefinition = {
       label: "圖片陰影",
       type: "text",
       description: "設定圖片陰影效果（CSS box-shadow 格式）"
+    },
+    
+    // 互動設定
+    {
+      key: "action",
+      label: "點擊動作",
+      type: "action",
+      description: "設定點擊圖片時的互動行為",
+      component: "ActionSelector"
     }
   ],
   validation: {

@@ -18,6 +18,7 @@ export const boxContainer: BlockDefinition = {
   defaultData: {
     title: "Box 容器",
     containerType: "box",
+    useGradientBackground: false,
     properties: {
       ...DEFAULT_BOX_PROPERTIES,
       layout: "vertical",
@@ -25,7 +26,8 @@ export const boxContainer: BlockDefinition = {
       padding: "md",
       backgroundColor: "#FFFFFF",
       justifyContent: "start",
-      alignItems: "start"
+      alignItems: "start",
+      background: null
     } as BoxAdvancedProperties,
     contents: [], // 子元件列表
   },
@@ -230,6 +232,28 @@ export const boxContainer: BlockDefinition = {
       validation: {
         pattern: "^#[0-9A-Fa-f]{6}$",
         message: "背景顏色必須是有效的十六進位色碼"
+      },
+      showWhen: {
+        field: "useGradientBackground",
+        value: false
+      }
+    },
+    {
+      key: "useGradientBackground",
+      label: "使用漸層背景",
+      type: "boolean",
+      defaultValue: false,
+      description: "啟用後可以設定漸層背景效果"
+    },
+    {
+      key: "properties.background",
+      label: "漸層背景設定",
+      type: "custom",
+      description: "設定容器的漸層背景效果",
+      component: "GradientEditor",
+      showWhen: {
+        field: "useGradientBackground",
+        value: true
       }
     },
     
@@ -310,6 +334,16 @@ export const boxContainer: BlockDefinition = {
       label: "盒子陰影",
       type: "text",
       description: "設定容器的盒子陰影效果（CSS 格式）"
+    },
+    
+    // 子元件管理
+    {
+      key: "contents",
+      label: "子元件列表",
+      type: "array",
+      description: "管理容器內的子元件",
+      component: "ContentsManager",
+      arrayItemType: "FlexComponent"
     }
   ],
   validation: {

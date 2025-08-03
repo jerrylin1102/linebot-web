@@ -10,6 +10,7 @@ import {
   DEFAULT_TEXT_PROPERTIES, 
   TextAdvancedProperties 
 } from "../../../../types/flexProperties";
+import { LineAction } from "../../../../types/lineActions";
 
 export const textContent: BlockDefinition = {
   id: "text-content",
@@ -24,14 +25,17 @@ export const textContent: BlockDefinition = {
     title: "文字",
     contentType: "text",
     text: "範例文字",
+    useSpanContents: false,
     properties: {
       ...DEFAULT_TEXT_PROPERTIES,
       size: "md",
       weight: "regular",
       color: "#000000",
       align: "start",
-      gravity: "center"
+      gravity: "center",
+      contents: []
     } as TextAdvancedProperties,
+    action: null as LineAction | null,
   },
   tags: ["flex", "內容", "文字", "進階", "效果"],
   version: "2.0.0",
@@ -49,11 +53,31 @@ export const textContent: BlockDefinition = {
       label: "文字內容",
       type: "textarea",
       defaultValue: "範例文字",
-      description: "設定要顯示的文字內容",
+      description: "設定要顯示的文字內容（單一樣式）",
       required: true,
       validation: {
         message: "文字內容不能為空"
       }
+    },
+    
+    // Span 混合樣式設定
+    {
+      key: "properties.contents",
+      label: "混合樣式設定",
+      type: "custom",
+      description: "設定包含多種樣式的文字內容（進階功能）",
+      component: "SpanEditor",
+      showWhen: {
+        field: "useSpanContents",
+        value: true
+      }
+    },
+    {
+      key: "useSpanContents",
+      label: "使用混合樣式",
+      type: "boolean",
+      defaultValue: false,
+      description: "啟用後可以設定包含多種樣式的文字內容"
     },
     {
       key: "properties.size",
@@ -252,6 +276,15 @@ export const textContent: BlockDefinition = {
       label: "文字陰影",
       type: "text",
       description: "設定文字陰影效果（CSS text-shadow 格式）"
+    },
+    
+    // 互動設定
+    {
+      key: "action",
+      label: "點擊動作",
+      type: "action",
+      description: "設定點擊文字時的互動行為",
+      component: "ActionSelector"
     }
   ],
   validation: {

@@ -107,6 +107,17 @@ export interface BackgroundProperties {
   background?: LinearGradient;
 }
 
+// ============ Span 元件屬性 ============
+export interface SpanElement {
+  type: "span";
+  text: string;
+  size?: FlexSize;
+  weight?: FlexWeight;
+  color?: string;
+  decoration?: "none" | "underline" | "line-through";
+  style?: "normal" | "italic";
+}
+
 // ============ 組合屬性介面 ============
 
 // Box 容器進階屬性
@@ -134,6 +145,9 @@ export interface TextAdvancedProperties extends
   lineSpacing?: FlexSpacing;
   maxLines?: number;
   wrap?: boolean;
+  
+  // Span 混合樣式支援
+  contents?: SpanElement[];
 }
 
 // Image 圖片進階屬性
