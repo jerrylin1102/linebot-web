@@ -42,7 +42,7 @@ export interface MemoryOptimization {
 export class MemoryManager {
   private snapshots: MemorySnapshot[] = [];
   private alerts: MemoryAlert[] = [];
-  private componentRegistry = new Map<string, WeakRef<any>>();
+  private componentRegistry = new Map<string, WeakRef<unknown>>();
   private listenerRegistry = new Map<string, Set<() => void>>();
   private timerRegistry = new Set<NodeJS.Timeout>();
   private observedComponents = new Map<string, number>();
@@ -93,7 +93,7 @@ export class MemoryManager {
   /**
    * 註冊組件
    */
-  registerComponent(name: string, component: any): void {
+  registerComponent(name: string, component: unknown): void {
     this.componentRegistry.set(name, new WeakRef(component));
     this.observedComponents.set(name, (this.observedComponents.get(name) || 0) + 1);
   }
@@ -317,7 +317,7 @@ export class MemoryManager {
 
   private getMemoryInfo(): { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } {
     if ('memory' in performance) {
-      return (performance as any).memory;
+      return (performance as Performance & { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
     }
     return { usedJSHeapSize: 0, totalJSHeapSize: 0, jsHeapSizeLimit: 0 };
   }
@@ -335,7 +335,7 @@ export class MemoryManager {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // localStorage 不可用
     }
     return size;

@@ -3,7 +3,7 @@
  * 集成錯誤日志、系統健康監控和其他調試工具
  */
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -16,14 +16,12 @@ import {
   Activity, 
   FileText, 
   Settings, 
-  Eye,
-  EyeOff,
   Minimize2,
   Maximize2,
   X,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Trash2
 } from "lucide-react";
 
 interface DebugPanelProps {
@@ -52,7 +50,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const errorManager = ErrorManager.getInstance();
 
   // 更新系統統計
-  const updateStats = () => {
+  const updateStats = useCallback(() => {
     const health = errorManager.getHealthStatus();
     setSystemStats({
       totalErrors: health.totalErrors,
@@ -60,14 +58,14 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
       criticalErrors: health.criticalErrors,
       isHealthy: health.criticalErrors === 0 && health.recentErrors < 5,
     });
-  };
+  }, [errorManager]);
 
   // 定期更新統計
   React.useEffect(() => {
     updateStats();
     const interval = setInterval(updateStats, 10000); // 每10秒更新
     return () => clearInterval(interval);
-  }, []);
+  }, [updateStats]);
 
   // 如果不可見，顯示浮動按鈕
   if (!isVisible) {
@@ -365,23 +363,5 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   );
 };
 
-// 調試工具鉤子
-export const useDebugPanel = () => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  const toggle = () => setIsVisible(!isVisible);
-  const show = () => setIsVisible(true);
-  const hide = () => setIsVisible(false);
-
-  return {
-    isVisible,
-    toggle,
-    show,
-    hide,
-    DebugPanel: (props: Omit<DebugPanelProps, "isVisible" | "onToggle">) => (
-      <DebugPanel {...props} isVisible={isVisible} onToggle={toggle} />
-    ),
-  };
-};
 
 export default DebugPanel;

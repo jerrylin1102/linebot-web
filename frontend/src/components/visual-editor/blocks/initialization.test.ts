@@ -6,9 +6,9 @@ import {
   BlockInitializationManager,
   InitializationState,
   InitializationError,
-  InitializationErrorType,
-  DEFAULT_INITIALIZATION_CONFIG
+  InitializationErrorType
 } from './initialization';
+import { BlockCategory, WorkspaceContext } from '../../../types/block';
 
 /**
  * 測試初始化管理器基本功能
@@ -37,9 +37,9 @@ export function testInitializationManager() {
   console.log('✅ 配置設定測試通過');
   
   // 測試 4: 事件監聽器
-  let eventReceived = false;
+  let _eventReceived = false;
   const unsubscribe = manager.addEventListener('state-changed', () => {
-    eventReceived = true;
+    _eventReceived = true;
   });
   console.assert(typeof unsubscribe === 'function', '❌ 事件監聽器註冊失敗');
   console.log('✅ 事件監聽器測試通過');
@@ -83,10 +83,10 @@ export function testDependencyResolution() {
       blockType: 'test',
       dependencies: ['block-b'],
       displayName: 'Block A',
-      category: 'EVENT' as any,
-      icon: null as any,
+      category: 'EVENT' as unknown,
+      icon: null as unknown,
       color: 'blue',
-      compatibility: ['LOGIC' as any],
+      compatibility: ['LOGIC' as unknown],
       defaultData: {}
     },
     {
@@ -94,10 +94,10 @@ export function testDependencyResolution() {
       blockType: 'test',
       dependencies: [],
       displayName: 'Block B',
-      category: 'EVENT' as any,
-      icon: null as any,
+      category: BlockCategory.EVENT,
+      icon: null,
       color: 'blue',
-      compatibility: ['LOGIC' as any],
+      compatibility: [WorkspaceContext.LOGIC],
       defaultData: {}
     },
     {
@@ -105,10 +105,10 @@ export function testDependencyResolution() {
       blockType: 'test',
       dependencies: ['block-a'],
       displayName: 'Block C',
-      category: 'EVENT' as any,
-      icon: null as any,
+      category: BlockCategory.EVENT,
+      icon: null,
       color: 'blue',
-      compatibility: ['LOGIC' as any],
+      compatibility: [WorkspaceContext.LOGIC],
       defaultData: {}
     }
   ];

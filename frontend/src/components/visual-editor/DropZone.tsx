@@ -147,10 +147,10 @@ const DropZone: React.FC<DropZoneProps> = ({
               const blockForError = "category" in item 
                 ? { 
                     id: `temp-${Date.now()}`, 
-                    blockType: (item as any).blockType || 'unknown',
-                    category: (item as any).category,
-                    blockData: (item as any).blockData || {},
-                    compatibility: (item as any).compatibility || []
+                    blockType: (item as { blockType?: string }).blockType || 'unknown',
+                    category: (item as { category: unknown }).category,
+                    blockData: (item as { blockData?: Record<string, unknown> }).blockData || {},
+                    compatibility: (item as { compatibility?: string[] }).compatibility || []
                   } as UnifiedBlock
                 : migrateBlock(item as LegacyDropItem);
 
@@ -265,10 +265,10 @@ const DropZone: React.FC<DropZoneProps> = ({
                 const blockForError = "category" in item 
                   ? { 
                       id: `temp-${Date.now()}`, 
-                      blockType: (item as any).blockType || 'unknown',
-                      category: (item as any).category,
-                      blockData: (item as any).blockData || {},
-                      compatibility: (item as any).compatibility || []
+                      blockType: (item as { blockType?: string }).blockType || 'unknown',
+                      category: (item as { category: unknown }).category,
+                      blockData: (item as { blockData?: Record<string, unknown> }).blockData || {},
+                      compatibility: (item as { compatibility?: string[] }).compatibility || []
                     } as UnifiedBlock
                   : migrateBlock(item as LegacyDropItem);
 

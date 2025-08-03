@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -51,7 +51,7 @@ const FlexMessageSelector: React.FC<FlexMessageSelectorProps> = ({
   const { toast } = useToast();
 
   // 載入 FlexMessage 列表（使用快取服務）
-  const loadFlexMessages = async () => {
+  const loadFlexMessages = useCallback(async () => {
     setIsLoadingFlexMessages(true);
     try {
       const messages = await dataCache.getUserFlexMessagesSummary();
@@ -63,12 +63,12 @@ const FlexMessageSelector: React.FC<FlexMessageSelectorProps> = ({
     } finally {
       setIsLoadingFlexMessages(false);
     }
-  };
+  }, [dataCache]);
 
   // 組件載入時取得 FlexMessage 列表
   useEffect(() => {
     loadFlexMessages();
-  }, []);
+  }, [loadFlexMessages]);
 
   // 創建新 FlexMessage
   const handleCreateFlexMessage = async () => {

@@ -30,6 +30,25 @@ export interface PerformanceBudget {
   bundleSize: number;
 }
 
+interface WebVitalsData {
+  lcp?: number;
+  fid?: number;
+  cls?: number;
+  fcp?: number;
+}
+
+interface MemoryData {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+interface PerformanceEntryExtended extends PerformanceEntry {
+  processingStart?: number;
+  value?: number;
+  hadRecentInput?: boolean;
+}
+
 export interface PerformanceReport {
   overall: 'excellent' | 'good' | 'needs-improvement' | 'poor';
   score: number;
@@ -258,7 +277,7 @@ export class PerformanceMonitor {
       // 監控FID
       const fidObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
-          const fidEntry = entry as any;
+          const fidEntry = entry as PerformanceEntryExtended;
           this.recordMetric('first_input_delay', fidEntry.processingStart - fidEntry.startTime, 'timing', 'ms', this.budget.firstInputDelay);
         });
       });
@@ -269,7 +288,7 @@ export class PerformanceMonitor {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
-          const clsEntry = entry as any;
+          const clsEntry = entry as PerformanceEntryExtended;
           if (!clsEntry.hadRecentInput) {
             clsValue += clsEntry.value;
             this.recordMetric('cumulative_layout_shift', clsValue, 'render', 'score', this.budget.cumulativeLayoutShift);
@@ -324,7 +343,7 @@ export class PerformanceMonitor {
 
   private getMemoryUsage(): { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } {
     if ('memory' in performance) {
-      return (performance as any).memory;
+      return (performance as Performance & { memory: MemoryData }).memory;
     }
     return { usedJSHeapSize: 0, totalJSHeapSize: 0, jsHeapSizeLimit: 0 };
   }
@@ -341,7 +360,7 @@ export class PerformanceMonitor {
     };
   }
 
-  private checkBudgetViolations(coreWebVitals: any, memoryUsage: any): string[] {
+  private checkBudgetViolations(coreWebVitals: WebVitalsData, memoryUsage: MemoryData): string[] {
     const violations: string[] = [];
 
     if (coreWebVitals.fcp > this.budget.firstContentfulPaint) {
@@ -371,7 +390,7 @@ export class PerformanceMonitor {
     return violations;
   }
 
-  private calculateOverallScore(coreWebVitals: any, memoryUsage: any, violations: string[]): number {
+  private calculateOverallScore(coreWebVitals: WebVitalsData, memoryUsage: MemoryData, _violations: string[]): number {
     let score = 100;
 
     // FCP 評分
@@ -420,7 +439,7 @@ export class PerformanceMonitor {
     return 'poor';
   }
 
-  private getRecommendations(coreWebVitals: any, memoryUsage: any, violations: string[]): string[] {
+  private getRecommendations(coreWebVitals: WebVitalsData, memoryUsage: MemoryData, violations: string[]): string[] {
     const recommendations: string[] = [];
 
     if (coreWebVitals.fcp > this.budget.firstContentfulPaint) {

@@ -2,17 +2,9 @@
  * 載入狀態和進度顯示系統 - 提供多種載入指示器和進度條
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
-
-export interface LoadingState {
-  isLoading: boolean;
-  progress?: number;
-  message?: string;
-  type?: 'spinner' | 'progress' | 'skeleton' | 'dots' | 'pulse';
-  size?: 'sm' | 'md' | 'lg';
-  overlay?: boolean;
-}
+import { LoadingState } from '../../services/loadingManager';
 
 export interface ProgressStep {
   id: string;
@@ -21,6 +13,7 @@ export interface ProgressStep {
   progress?: number;
   message?: string;
 }
+
 
 // 基礎載入動畫組件
 const SpinnerLoader: React.FC<{ size: string; className?: string }> = ({ size, className = '' }) => {
@@ -345,119 +338,5 @@ export const LoadingIndicator: React.FC<LoadingState & { className?: string }> =
 };
 
 // 載入管理器
-export class LoadingManager {
-  private loadingStates = new Map<string, LoadingState>();
-  private listeners = new Set<(states: Map<string, LoadingState>) => void>();
-
-  /**
-   * 顯示載入狀態
-   */
-  show(id: string, state: Partial<LoadingState> = {}): void {
-    const loadingState: LoadingState = {
-      isLoading: true,
-      type: 'spinner',
-      size: 'md',
-      overlay: false,
-      ...state
-    };
-
-    this.loadingStates.set(id, loadingState);
-    this.notifyListeners();
-  }
-
-  /**
-   * 更新載入狀態
-   */
-  update(id: string, updates: Partial<LoadingState>): void {
-    const current = this.loadingStates.get(id);
-    if (current) {
-      this.loadingStates.set(id, { ...current, ...updates });
-      this.notifyListeners();
-    }
-  }
-
-  /**
-   * 隱藏載入狀態
-   */
-  hide(id: string): void {
-    this.loadingStates.delete(id);
-    this.notifyListeners();
-  }
-
-  /**
-   * 獲取載入狀態
-   */
-  get(id: string): LoadingState | undefined {
-    return this.loadingStates.get(id);
-  }
-
-  /**
-   * 獲取所有載入狀態
-   */
-  getAll(): Map<string, LoadingState> {
-    return new Map(this.loadingStates);
-  }
-
-  /**
-   * 監聽狀態變化
-   */
-  subscribe(listener: (states: Map<string, LoadingState>) => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  /**
-   * 清除所有載入狀態
-   */
-  clear(): void {
-    this.loadingStates.clear();
-    this.notifyListeners();
-  }
-
-  private notifyListeners(): void {
-    this.listeners.forEach(listener => {
-      try {
-        listener(new Map(this.loadingStates));
-      } catch (error) {
-        console.error('載入狀態監聽器錯誤:', error);
-      }
-    });
-  }
-}
-
-// 全局載入管理器
-export const globalLoadingManager = new LoadingManager();
-
-// React Hook for loading management
-export const useLoading = (id?: string) => {
-  const [loadingStates, setLoadingStates] = useState(globalLoadingManager.getAll());
-
-  useEffect(() => {
-    return globalLoadingManager.subscribe(setLoadingStates);
-  }, []);
-
-  const showLoading = React.useCallback((loadingId: string, state?: Partial<LoadingState>) => {
-    globalLoadingManager.show(loadingId, state);
-  }, []);
-
-  const updateLoading = React.useCallback((loadingId: string, updates: Partial<LoadingState>) => {
-    globalLoadingManager.update(loadingId, updates);
-  }, []);
-
-  const hideLoading = React.useCallback((loadingId: string) => {
-    globalLoadingManager.hide(loadingId);
-  }, []);
-
-  const currentState = id ? loadingStates.get(id) : undefined;
-
-  return {
-    loadingStates,
-    currentState,
-    showLoading,
-    updateLoading,
-    hideLoading,
-    isLoading: currentState?.isLoading || false
-  };
-};
 
 export default LoadingIndicator;

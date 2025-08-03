@@ -7,12 +7,14 @@ import React, { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ActionType, 
   LineAction, 
+  PostbackAction,
+  MessageAction,
+  UriAction,
   ACTION_TYPE_CONFIG, 
   createDefaultAction,
   validateAction 
@@ -71,7 +73,7 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
   };
 
   // 處理Action數據變更
-  const handleDataChange = (field: string, value: any) => {
+  const handleDataChange = (field: string, value: string) => {
     const updatedAction = {
       ...actionData,
       [field]: value
@@ -90,11 +92,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
 
   // 渲染Action特定的配置欄位
   const renderActionFields = () => {
-    const config = ACTION_TYPE_CONFIG[selectedType];
     
     switch (selectedType) {
-      case ActionType.POSTBACK:
-        const postback = actionData as any;
+      case ActionType.POSTBACK: {
+        const postback = actionData as PostbackAction;
         return (
           <div className="space-y-4">
             <div>
@@ -117,9 +118,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             </div>
           </div>
         );
+      }
 
-      case ActionType.MESSAGE:
-        const message = actionData as any;
+      case ActionType.MESSAGE: {
+        const message = actionData as MessageAction;
         return (
           <div>
             <Label htmlFor="text">訊息內容 *</Label>
@@ -131,9 +133,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             />
           </div>
         );
+      }
 
-      case ActionType.URI:
-        const uri = actionData as any;
+      case ActionType.URI: {
+        const uri = actionData as UriAction;
         return (
           <div className="space-y-4">
             <div>
@@ -158,9 +161,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             </div>
           </div>
         );
+      }
 
-      case ActionType.DATETIME_PICKER:
-        const datetime = actionData as any;
+      case ActionType.DATETIME_PICKER: {
+        const datetime = actionData as { data?: string; mode?: string; initial?: string; max?: string; min?: string };
         return (
           <div className="space-y-4">
             <div>
@@ -199,9 +203,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             </div>
           </div>
         );
+      }
 
-      case ActionType.RICHMENU_SWITCH:
-        const richmenu = actionData as any;
+      case ActionType.RICHMENU_SWITCH: {
+        const richmenu = actionData as { richMenuAliasId?: string; data?: string };
         return (
           <div className="space-y-4">
             <div>
@@ -224,9 +229,10 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             </div>
           </div>
         );
+      }
 
-      case ActionType.CLIPBOARD:
-        const clipboard = actionData as any;
+      case ActionType.CLIPBOARD: {
+        const clipboard = actionData as { clipboardText?: string };
         return (
           <div>
             <Label htmlFor="clipboardText">複製內容 *</Label>
@@ -238,6 +244,7 @@ export const ActionSelector: React.FC<ActionSelectorProps> = ({
             />
           </div>
         );
+      }
 
       default:
         return (

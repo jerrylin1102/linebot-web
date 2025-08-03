@@ -14,6 +14,16 @@ import {
   ErrorHandleResult,
 } from "@/types/error";
 
+// Error context interface
+interface ErrorContext {
+  component?: string;
+  operation?: string;
+  metadata?: Record<string, unknown>;
+  timestamp?: number;
+  userId?: string;
+  sessionId?: string;
+}
+
 interface ErrorState {
   currentError: UnifiedError | null;
   isHandling: boolean;
@@ -38,14 +48,14 @@ interface UseErrorHandlerReturn {
   hasError: boolean;
   
   // 錯誤處理方法
-  handleError: (error: Error | string, context?: Partial<any>) => Promise<ErrorHandleResult>;
-  handleErrorAsync: (operation: () => Promise<any>, context?: Partial<any>) => Promise<any>;
+  handleError: (error: Error | string, context?: Partial<ErrorContext>) => Promise<ErrorHandleResult>;
+  handleErrorAsync: <T>(operation: () => Promise<T>, context?: Partial<ErrorContext>) => Promise<T>;
   clearError: () => void;
   clearErrorHistory: () => void;
   
   // 重試方法
   retryLastOperation: () => Promise<void>;
-  retryWithCustomOperation: (operation: () => Promise<any>) => Promise<any>;
+  retryWithCustomOperation: <T>(operation: () => Promise<T>) => Promise<T>;
   
   // 恢復方法
   recoverFromError: (strategy?: RecoveryStrategy) => Promise<void>;
@@ -60,7 +70,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
   const {
     enableNotifications = true,
     enableAutoRetry = true,
-    maxAutoRetries = 3,
+    maxAutoRetries: _maxAutoRetries = 3,
     enableErrorHistory = true,
     onError,
     onRecover,
@@ -74,34 +84,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
   });
 
   const errorManager = useRef(ErrorManager.getInstance());
-  const lastOperationRef = useRef<(() => Promise<any>) | null>(null);
-
-  // 監聽全局錯誤
-  useEffect(() => {
-    const handleGlobalError = (error: UnifiedError) => {
-      setState(prev => ({
-        ...prev,
-        currentError: error,
-        errorHistory: enableErrorHistory 
-          ? [...prev.errorHistory.slice(-99), error] 
-          : prev.errorHistory,
-      }));
-
-      // 顯示通知
-      if (enableNotifications) {
-        showErrorNotification(error);
-      }
-
-      // 觸發回調
-      onError?.(error);
-    };
-
-    errorManager.current.addErrorListener(handleGlobalError);
-
-    return () => {
-      errorManager.current.removeErrorListener(handleGlobalError);
-    };
-  }, [enableNotifications, enableErrorHistory, onError]);
+  const lastOperationRef = useRef<(() => Promise<unknown>) | null>(null);
 
   /**
    * 顯示錯誤通知
@@ -130,12 +113,55 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
     }
   }, []);
 
+  // 監聽全局錯誤
+  useEffect(() => {
+    const manager = errorManager.current;
+    
+    const handleGlobalError = (error: UnifiedError) => {
+      setState(prev => ({
+        ...prev,
+        currentError: error,
+        errorHistory: enableErrorHistory 
+          ? [...prev.errorHistory.slice(-99), error] 
+          : prev.errorHistory,
+      }));
+
+      // 顯示通知
+      if (enableNotifications) {
+        showErrorNotification(error);
+      }
+
+      // 觸發回調
+      onError?.(error);
+    };
+
+    manager.addErrorListener(handleGlobalError);
+
+    return () => {
+      manager.removeErrorListener(handleGlobalError);
+    };
+  }, [enableNotifications, enableErrorHistory, onError, showErrorNotification]);
+
+  /**
+   * 重試操作
+   */
+  const retryOperation = useCallback(async <T>(
+    operation: () => Promise<T>
+  ): Promise<{ success: boolean; result?: T; error?: Error }> => {
+    try {
+      const result = await operation();
+      return { success: true, result };
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  }, []);
+
   /**
    * 主要錯誤處理方法
    */
   const handleError = useCallback(async (
     error: Error | string,
-    context: Partial<any> = {}
+    context: Partial<ErrorContext> = {}
   ): Promise<ErrorHandleResult> => {
     setState(prev => ({ ...prev, isHandling: true }));
 
@@ -152,7 +178,11 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
       if (enableAutoRetry && result.recovery === RecoveryStrategy.RETRY && lastOperationRef.current) {
         const retryResult = await retryOperation(lastOperationRef.current);
         if (retryResult.success) {
-          onRecover?.(state.currentError!, result);
+          // 使用 setState 回調來獲取最新的 currentError
+          setState(currentState => {
+            onRecover?.(currentState.currentError!, result);
+            return currentState;
+          });
         }
       }
 
@@ -161,14 +191,14 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
       setState(prev => ({ ...prev, isHandling: false }));
       throw handlingError;
     }
-  }, [enableAutoRetry, onRecover, state.currentError]);
+  }, [enableAutoRetry, onRecover, retryOperation]);
 
   /**
    * 異步操作錯誤處理包裝器
    */
   const handleErrorAsync = useCallback(async <T>(
     operation: () => Promise<T>,
-    context: Partial<any> = {}
+    context: Partial<ErrorContext> = {}
   ): Promise<T> => {
     lastOperationRef.current = operation;
     
@@ -181,20 +211,6 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
   }, [handleError]);
 
   /**
-   * 重試操作
-   */
-  const retryOperation = useCallback(async (
-    operation: () => Promise<any>
-  ): Promise<{ success: boolean; result?: any; error?: Error }> => {
-    try {
-      const result = await operation();
-      return { success: true, result };
-    } catch (error) {
-      return { success: false, error: error as Error };
-    }
-  }, []);
-
-  /**
    * 重試最後一次操作
    */
   const retryLastOperation = useCallback(async (): Promise<void> => {
@@ -202,7 +218,15 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
       throw new Error("沒有可重試的操作");
     }
 
-    if (!state.currentError?.isRetryable) {
+    // 通過 setState 獲取當前狀態來檢查錯誤
+    const currentState = await new Promise<ErrorState>(resolve => {
+      setState(state => {
+        resolve(state);
+        return state;
+      });
+    });
+
+    if (!currentState.currentError?.isRetryable) {
       throw new Error("當前錯誤不支援重試");
     }
 
@@ -211,18 +235,18 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
     if (retryResult.success) {
       setState(prev => ({ ...prev, currentError: null }));
       toast.success("操作重試成功");
-      onRecover?.(state.currentError!, { success: true, recovery: RecoveryStrategy.RETRY });
+      onRecover?.(currentState.currentError!, { success: true, recovery: RecoveryStrategy.RETRY });
     } else {
       throw retryResult.error;
     }
-  }, [state.currentError, onRecover]);
+  }, [onRecover, retryOperation]);
 
   /**
    * 使用自定義操作重試
    */
-  const retryWithCustomOperation = useCallback(async (
-    operation: () => Promise<any>
-  ): Promise<any> => {
+  const retryWithCustomOperation = useCallback(async <T>(
+    operation: () => Promise<T>
+  ): Promise<T> => {
     lastOperationRef.current = operation;
     return operation();
   }, []);
@@ -233,9 +257,17 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
   const recoverFromError = useCallback(async (
     strategy?: RecoveryStrategy
   ): Promise<void> => {
-    if (!state.currentError) return;
+    // 通過 setState 獲取當前狀態
+    const currentState = await new Promise<ErrorState>(resolve => {
+      setState(state => {
+        resolve(state);
+        return state;
+      });
+    });
 
-    const recoveryStrategy = strategy || state.currentError.recovery || RecoveryStrategy.NONE;
+    if (!currentState.currentError) return;
+
+    const recoveryStrategy = strategy || currentState.currentError.recovery || RecoveryStrategy.NONE;
     
     switch (recoveryStrategy) {
       case RecoveryStrategy.RETRY:
@@ -267,7 +299,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorH
       default:
         setState(prev => ({ ...prev, currentError: null }));
     }
-  }, [state.currentError, retryLastOperation]);
+  }, [retryLastOperation]);
 
   /**
    * 清除當前錯誤

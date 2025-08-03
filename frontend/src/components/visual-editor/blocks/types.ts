@@ -65,12 +65,12 @@ export interface BlockDefinition {
     rules?: Array<{
       field: string;
       type: "enum" | "pattern" | "range" | "custom";
-      values?: any[];
+      values?: unknown[];
       pattern?: RegExp;
       min?: number;
       max?: number;
       message: string;
-      validator?: (value: any) => boolean;
+      validator?: (value: unknown) => boolean;
     }>;
   };
 

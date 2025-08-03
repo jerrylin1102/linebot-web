@@ -16,7 +16,7 @@ import { LineAction } from '../types/lineActions';
 // ============ 基礎轉換介面 ============
 export interface FlexComponent {
   type: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface FlexBox extends FlexComponent {
@@ -51,7 +51,7 @@ export interface BlockData {
   title: string;
   contentType?: string;
   containerType?: string;
-  properties?: any;
+  properties?: Record<string, unknown>;
   contents?: BlockData[];
   text?: string;
   url?: string;
@@ -277,7 +277,7 @@ export function convertImageToFlex(blockData: BlockData): FlexImage {
 /**
  * 添加間距屬性
  */
-function addSpacingProperties(component: FlexComponent, properties: any): void {
+function addSpacingProperties(component: FlexComponent, properties: Record<string, unknown>): void {
   // 統一間距
   if (properties.padding && properties.padding !== "none") {
     component.paddingAll = properties.padding;
@@ -308,7 +308,7 @@ function addSpacingProperties(component: FlexComponent, properties: any): void {
 /**
  * 添加外觀屬性
  */
-function addAppearanceProperties(component: FlexComponent, properties: any): void {
+function addAppearanceProperties(component: FlexComponent, properties: Record<string, unknown>): void {
   // 背景顏色
   if (properties.backgroundColor && properties.backgroundColor !== "#FFFFFF") {
     component.backgroundColor = properties.backgroundColor;
@@ -336,7 +336,7 @@ function addAppearanceProperties(component: FlexComponent, properties: any): voi
 /**
  * 添加定位屬性
  */
-function addPositionProperties(component: FlexComponent, properties: any): void {
+function addPositionProperties(component: FlexComponent, properties: Record<string, unknown>): void {
   if (properties.position) {
     component.position = properties.position;
   }
@@ -361,7 +361,7 @@ function addPositionProperties(component: FlexComponent, properties: any): void 
 /**
  * 轉換線性漸層
  */
-function convertLinearGradient(gradient: LinearGradient): any {
+function convertLinearGradient(gradient: LinearGradient): Record<string, unknown> {
   return {
     type: "linearGradient",
     angle: gradient.angle || "0deg",
@@ -391,13 +391,14 @@ export function convertBlockToFlexComponent(blockData: BlockData): FlexComponent
     case "image":
       return convertImageToFlex(blockData);
     
-    case "separator":
+    case "separator": {
       const separatorProperties = blockData.properties || {};
       return {
         type: "separator",
         ...(separatorProperties.color && { color: separatorProperties.color }),
         ...(separatorProperties.margin && separatorProperties.margin !== "none" && { margin: separatorProperties.margin })
       };
+    }
     
     case "filler":
       return {
@@ -417,7 +418,7 @@ export function convertBlockToFlexComponent(blockData: BlockData): FlexComponent
 /**
  * 將 Bubble 積木轉換為 LINE Flex Message
  */
-export function convertBubbleToFlexMessage(bubbleData: BlockData): any {
+export function convertBubbleToFlexMessage(bubbleData: BlockData): Record<string, unknown> {
   const flexMessage = {
     type: "flex",
     altText: bubbleData.title || "Flex Message",
@@ -425,7 +426,7 @@ export function convertBubbleToFlexMessage(bubbleData: BlockData): any {
       type: "bubble",
       ...(bubbleData.properties?.size && { size: bubbleData.properties.size }),
       ...(bubbleData.properties?.direction && { direction: bubbleData.properties.direction })
-    } as any
+    } as Record<string, unknown>
   };
 
   // 處理 Bubble 的各個區塊
@@ -452,14 +453,14 @@ export function convertBubbleToFlexMessage(bubbleData: BlockData): any {
 /**
  * 將 Carousel 積木轉換為 LINE Flex Message
  */
-export function convertCarouselToFlexMessage(carouselData: BlockData): any {
+export function convertCarouselToFlexMessage(carouselData: BlockData): Record<string, unknown> {
   const flexMessage = {
     type: "flex",
     altText: carouselData.title || "Carousel Message",
     contents: {
       type: "carousel",
       contents: []
-    } as any
+    } as Record<string, unknown>
   };
 
   // 轉換每個 Bubble
@@ -476,7 +477,7 @@ export function convertCarouselToFlexMessage(carouselData: BlockData): any {
 /**
  * 驗證 Flex Message 格式
  */
-export function validateFlexMessage(flexMessage: any): { isValid: boolean; errors: string[] } {
+export function validateFlexMessage(flexMessage: Record<string, unknown>): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   // 基本結構驗證
@@ -516,7 +517,7 @@ export function validateFlexMessage(flexMessage: any): { isValid: boolean; error
 /**
  * 生成 Python 代碼
  */
-export function generatePythonCode(flexMessage: any): string {
+export function generatePythonCode(flexMessage: Record<string, unknown>): string {
   const validation = validateFlexMessage(flexMessage);
   if (!validation.isValid) {
     throw new Error(`Flex Message 驗證失敗: ${validation.errors.join(", ")}`);
@@ -544,7 +545,7 @@ export function generatePythonCode(flexMessage: any): string {
 /**
  * 生成 Python 物件字符串
  */
-function generatePythonObject(obj: any, indentLevel: number = 0): string {
+function generatePythonObject(obj: unknown, indentLevel: number = 0): string {
   const indent = "    ".repeat(indentLevel);
   const nextIndent = "    ".repeat(indentLevel + 1);
   

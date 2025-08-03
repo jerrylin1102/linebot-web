@@ -208,28 +208,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
     });
   }, [logicBlocks, flexBlocks, normalizeBlocks, toast]);
 
-  // 在積木變更時驗證工作區 - 使用更可靠的防抖機制
-  const debouncedValidation = React.useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout | null = null;
-      
-      return () => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
-        timeoutId = setTimeout(() => {
-          validateCurrentWorkspace();
-          timeoutId = null;
-        }, 500);
-      };
-    })(),
-    [validateCurrentWorkspace]
-  );
-
+  // 在積木變更時驗證工作區 - 使用防抖機制
   React.useEffect(() => {
-    debouncedValidation();
-  }, [logicBlocks, flexBlocks, debouncedValidation]);
+    const timeoutId = setTimeout(() => {
+      validateCurrentWorkspace();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [logicBlocks, flexBlocks, validateCurrentWorkspace]);
 
   const handleLogicDrop = useCallback(
     (item: UnifiedDropItem | LegacyDropItem) => {

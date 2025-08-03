@@ -2,7 +2,7 @@
  * 優化後的拖拽系統 - 提升拖拽性能，減少重渲染，優化大量元素拖拽
  */
 
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { globalPerformanceMonitor } from '../../services/PerformanceMonitor';
 import { globalMemoryManager } from '../../services/MemoryManager';
 import { Block } from '../../types/block';
@@ -182,7 +182,7 @@ export class OptimizedDragDropManager {
   /**
    * 結束拖拽
    */
-  endDrag(event?: MouseEvent | TouchEvent): void {
+  endDrag(_event?: MouseEvent | TouchEvent): void {
     if (!this.dragState.isDragging) return;
 
     // 清理計時器
@@ -444,36 +444,6 @@ export class OptimizedDragDropManager {
   }
 }
 
-// 全局拖拽管理器實例
-export const globalDragDropManager = new OptimizedDragDropManager();
-
-// React Hook for drag and drop
-export const useDragDrop = () => {
-  const [dragState, setDragState] = useState<DragState>(globalDragDropManager.getState());
-
-  useEffect(() => {
-    return globalDragDropManager.subscribe(setDragState);
-  }, []);
-
-  const registerDragItem = useCallback((config: DragItemConfig) => {
-    return globalDragDropManager.registerDragItem(config);
-  }, []);
-
-  const registerDropZone = useCallback((config: DropZoneConfig) => {
-    return globalDragDropManager.registerDropZone(config);
-  }, []);
-
-  const startDrag = useCallback((itemId: string, event: MouseEvent | TouchEvent) => {
-    return globalDragDropManager.startDrag(itemId, event);
-  }, []);
-
-  return {
-    dragState,
-    registerDragItem,
-    registerDropZone,
-    startDrag
-  };
-};
 
 // Optimized Draggable Component
 export interface DraggableProps {

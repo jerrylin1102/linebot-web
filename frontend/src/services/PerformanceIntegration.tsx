@@ -2,52 +2,16 @@
  * 性能優化整合層 - 將所有性能優化功能整合到現有系統
  */
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { globalPerformanceMonitor } from './PerformanceMonitor';
 import { globalMemoryManager } from './MemoryManager';
 import { globalNetworkOptimizer } from './NetworkOptimizer';
-import { globalDragDropManager } from '../components/visual-editor/OptimizedDragDrop';
-import { globalLoadingManager } from '../components/ui/LoadingSystem';
+import { globalDragDropManager } from './dragDropManager';
+import { globalLoadingManager } from './loadingManager';
 import { globalPerformanceTester } from './PerformanceTester';
+import { SystemStatus, PerformanceContextValue } from '../hooks/usePerformance';
+import { PerformanceContext, usePerformance } from './PerformanceContext';
 
-interface PerformanceContextValue {
-  isOptimized: boolean;
-  performanceScore: number;
-  enablePerformanceMode: () => void;
-  disablePerformanceMode: () => void;
-  getSystemStatus: () => SystemStatus;
-}
-
-interface SystemStatus {
-  performance: {
-    score: number;
-    status: 'excellent' | 'good' | 'needs-improvement' | 'poor';
-  };
-  memory: {
-    usage: number;
-    alerts: number;
-    leaks: number;
-  };
-  network: {
-    hitRate: number;
-    responseTime: number;
-    failedRequests: number;
-  };
-  cache: {
-    size: number;
-    entries: number;
-  };
-}
-
-const PerformanceContext = createContext<PerformanceContextValue | null>(null);
-
-export const usePerformance = () => {
-  const context = useContext(PerformanceContext);
-  if (!context) {
-    throw new Error('usePerformance must be used within PerformanceProvider');
-  }
-  return context;
-};
 
 /**
  * 性能優化提供者 - 全局性能管理
@@ -56,21 +20,7 @@ export const PerformanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isOptimized, setIsOptimized] = useState(false);
   const [performanceScore, setPerformanceScore] = useState(100);
 
-  useEffect(() => {
-    // 初始化性能監控
-    initializePerformanceSystem();
-
-    // 設置定期更新
-    const updateInterval = setInterval(updatePerformanceMetrics, 5000);
-
-    // 清理函數
-    return () => {
-      clearInterval(updateInterval);
-      cleanupPerformanceSystem();
-    };
-  }, []);
-
-  const initializePerformanceSystem = () => {
+  const initializePerformanceSystem = useCallback(() => {
     // 啟動所有監控服務
     globalPerformanceMonitor.startMonitoring?.();
     globalMemoryManager.startMonitoring();
@@ -81,7 +31,10 @@ export const PerformanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
       
       // 自動啟用性能模式
       if (report.score < 75 && !isOptimized) {
-        enablePerformanceMode();
+        setIsOptimized(true);
+        console.log('啟用性能優化模式 (自動)');
+        globalMemoryManager.optimizeMemory();
+        globalNetworkOptimizer.clearCache();
       }
     });
 
@@ -89,20 +42,20 @@ export const PerformanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setTimeout(() => {
       globalPerformanceTester.runTest('page_load_time').catch(console.warn);
     }, 2000);
-  };
+  }, [isOptimized]);
 
-  const cleanupPerformanceSystem = () => {
+  const cleanupPerformanceSystem = useCallback(() => {
     globalPerformanceMonitor.stopMonitoring?.();
     globalMemoryManager.stopMonitoring();
     globalDragDropManager.cleanup();
-  };
+  }, []);
 
-  const updatePerformanceMetrics = () => {
+  const updatePerformanceMetrics = useCallback(() => {
     const report = globalPerformanceMonitor.getPerformanceReport();
     setPerformanceScore(report.score);
-  };
+  }, []);
 
-  const enablePerformanceMode = () => {
+  const enablePerformanceMode = useCallback(() => {
     setIsOptimized(true);
     
     // 啟用各種優化
@@ -124,12 +77,26 @@ export const PerformanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setTimeout(() => {
       globalLoadingManager.hide('performance_optimization');
     }, 2000);
-  };
+  }, []);
 
-  const disablePerformanceMode = () => {
+  const disablePerformanceMode = useCallback(() => {
     setIsOptimized(false);
     console.log('關閉性能優化模式');
-  };
+  }, []);
+
+  useEffect(() => {
+    // 初始化性能監控
+    initializePerformanceSystem();
+
+    // 設置定期更新
+    const updateInterval = setInterval(updatePerformanceMetrics, 5000);
+
+    // 清理函數
+    return () => {
+      clearInterval(updateInterval);
+      cleanupPerformanceSystem();
+    };
+  }, [initializePerformanceSystem, updatePerformanceMetrics, cleanupPerformanceSystem]);
 
   const getSystemStatus = (): SystemStatus => {
     const performanceReport = globalPerformanceMonitor.getPerformanceReport();
@@ -174,180 +141,9 @@ export const PerformanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
   );
 };
 
-/**
- * 性能優化 HOC - 為組件添加性能監控
- */
-export const withPerformanceMonitoring = <P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  componentName: string
-) => {
-  return React.memo((props: P) => {
-    const [renderCount, setRenderCount] = useState(0);
-    const renderStartTime = useRef<number>(0);
 
-    useEffect(() => {
-      renderStartTime.current = performance.now();
-      setRenderCount(prev => prev + 1);
-    });
 
-    useEffect(() => {
-      const renderTime = performance.now() - renderStartTime.current;
-      globalPerformanceMonitor.recordMetric(
-        `component_render_${componentName}`,
-        renderTime,
-        'render'
-      );
-    });
 
-    // 記憶體管理
-    useEffect(() => {
-      globalMemoryManager.registerComponent(componentName, {});
-      return () => {
-        globalMemoryManager.unregisterComponent(componentName);
-      };
-    }, []);
-
-    return <WrappedComponent {...props} />;
-  });
-};
-
-/**
- * 性能優化鉤子 - 為功能添加性能監控
- */
-export const usePerformanceMonitoring = (operationName: string) => {
-  const measureOperation = React.useCallback(
-    <T,>(operation: () => T): T => {
-      return globalPerformanceMonitor.measureFunction(operationName, operation);
-    },
-    [operationName]
-  );
-
-  const measureAsyncOperation = React.useCallback(
-    async <T,>(operation: () => Promise<T>): Promise<T> => {
-      return globalPerformanceMonitor.measureAsyncFunction(operationName, operation);
-    },
-    [operationName]
-  );
-
-  return {
-    measureOperation,
-    measureAsyncOperation
-  };
-};
-
-/**
- * 快取輔助鉤子
- */
-export const useOptimizedCache = <T,>(
-  key: string,
-  loader: () => Promise<T>,
-  options?: {
-    ttl?: number;
-    refreshOnMount?: boolean;
-  }
-) => {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const loadData = React.useCallback(async (force = false) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // 檢查快取
-      if (!force) {
-        const cached = globalNetworkOptimizer.getCacheStatus();
-        // 這裡可以實現快取檢查邏輯
-      }
-
-      const result = await globalPerformanceMonitor.measureAsyncFunction(
-        `cache_load_${key}`,
-        loader
-      );
-
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setLoading(false);
-    }
-  }, [key, loader]);
-
-  useEffect(() => {
-    if (options?.refreshOnMount !== false) {
-      loadData();
-    }
-  }, [loadData, options?.refreshOnMount]);
-
-  return {
-    data,
-    loading,
-    error,
-    reload: () => loadData(true)
-  };
-};
-
-/**
- * 優化的渲染鉤子
- */
-export const useOptimizedRender = <T,>(
-  dependencies: T[],
-  renderFn: () => React.ReactElement,
-  options?: {
-    throttle?: number;
-    skipEqual?: boolean;
-  }
-) => {
-  const lastDependencies = useRef<T[]>();
-  const lastResult = useRef<React.ReactElement>();
-  const throttleTimer = useRef<NodeJS.Timeout>();
-
-  const shouldUpdate = React.useMemo(() => {
-    if (!lastDependencies.current) return true;
-    
-    if (options?.skipEqual) {
-      return !dependencies.every((dep, index) => 
-        dep === lastDependencies.current![index]
-      );
-    }
-    
-    return true;
-  }, dependencies);
-
-  const render = React.useCallback(() => {
-    if (shouldUpdate) {
-      const startTime = performance.now();
-      const result = renderFn();
-      const renderTime = performance.now() - startTime;
-      
-      globalPerformanceMonitor.recordMetric('optimized_render', renderTime, 'render');
-      
-      lastDependencies.current = [...dependencies];
-      lastResult.current = result;
-      
-      return result;
-    }
-    
-    return lastResult.current!;
-  }, [shouldUpdate, renderFn, dependencies]);
-
-  if (options?.throttle) {
-    return React.useMemo(() => {
-      if (throttleTimer.current) {
-        clearTimeout(throttleTimer.current);
-      }
-      
-      throttleTimer.current = setTimeout(() => {
-        // 這裡可以實現節流邏輯
-      }, options.throttle);
-      
-      return render();
-    }, [render, options.throttle]);
-  }
-
-  return render();
-};
 
 /**
  * 效能優化設定組件
@@ -374,7 +170,13 @@ export const PerformanceSettings: React.FC = () => {
     }
   }, [autoOptimize, performanceScore, isOptimized, enablePerformanceMode]);
 
-  if (!systemStatus) return null;
+  if (!systemStatus) {
+    return (
+      <div className="p-4 bg-white rounded-lg shadow">
+        <div className="text-center text-gray-500">正在載入系統狀態...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 bg-white rounded-lg shadow">
@@ -483,13 +285,3 @@ export const PerformanceSettings: React.FC = () => {
   );
 };
 
-// 導出整合的性能優化系統
-export const PerformanceOptimization = {
-  Provider: PerformanceProvider,
-  Settings: PerformanceSettings,
-  withMonitoring: withPerformanceMonitoring,
-  useMonitoring: usePerformanceMonitoring,
-  useCache: useOptimizedCache,
-  useRender: useOptimizedRender,
-  usePerformance
-};

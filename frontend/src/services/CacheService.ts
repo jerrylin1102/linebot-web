@@ -259,7 +259,7 @@ export class IntelligentCache<T> {
   private decompress(data: T): T {
     try {
       if (this.isCompressed(data)) {
-        const compressed = data as any;
+        const compressed = data as { __compressed: boolean; data: string };
         const jsonString = atob(compressed.data);
         return JSON.parse(jsonString);
       }
@@ -270,7 +270,8 @@ export class IntelligentCache<T> {
   }
 
   private isCompressed(data: T): boolean {
-    return typeof data === 'object' && data !== null && (data as any).__compressed === true;
+    return typeof data === 'object' && data !== null && 
+           '__compressed' in data && (data as { __compressed: boolean }).__compressed === true;
   }
 
   private calculateAccessScore(entry: CacheEntry<T>): number {
@@ -332,7 +333,7 @@ export class IntelligentCache<T> {
           } else {
             localStorage.removeItem(persistKey);
           }
-        } catch (error) {
+        } catch (_error) {
           localStorage.removeItem(persistKey);
         }
       });
@@ -370,7 +371,7 @@ export class IntelligentCache<T> {
  * 快取管理器 - 管理多個快取實例
  */
 export class CacheManager {
-  private caches = new Map<string, IntelligentCache<any>>();
+  private caches = new Map<string, IntelligentCache<unknown>>();
   private defaultConfig: CacheConfig = {
     maxSize: 1000,
     defaultTTL: 300000, // 5分鐘

@@ -3,7 +3,7 @@
  * 提供系統錯誤統計和健康狀態顯示
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "./button";
 import { Card, CardHeader, CardTitle, CardContent } from "./card";
 import { Badge } from "./badge";
@@ -14,7 +14,6 @@ import {
   Activity, 
   AlertTriangle, 
   CheckCircle, 
-  Clock, 
   TrendingUp,
   Trash2,
   BarChart3,
@@ -70,7 +69,7 @@ const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({
   const previewErrorHandler = PreviewErrorHandler.getInstance();
 
   // 獲取系統健康統計
-  const fetchHealthStats = async () => {
+  const fetchHealthStats = useCallback(async () => {
     setIsLoading(true);
     
     try {
@@ -125,13 +124,13 @@ const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [errorManager, blockErrorHandler, previewErrorHandler]);
 
   // 計算健康評分 (0-100)
   const calculateHealthScore = (
-    general: any,
-    block: any,
-    preview: any
+    general: { criticalErrors: number; errorRate: number; recentErrors: number },
+    block: { loadFailures: number; configErrors: number; dropErrors: number },
+    preview: { renderFailures: number; codeGenFailures: number; networkErrors: number }
   ): number => {
     let score = 100;
 
@@ -205,7 +204,7 @@ const SystemHealthMonitor: React.FC<SystemHealthMonitorProps> = ({
       const interval = setInterval(fetchHealthStats, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [isOpen, refreshInterval]);
+  }, [isOpen, refreshInterval, fetchHealthStats]);
 
   if (!isOpen) return null;
 

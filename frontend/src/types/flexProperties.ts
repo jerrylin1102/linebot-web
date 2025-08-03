@@ -291,7 +291,7 @@ export const PROPERTY_VALIDATION_RULES: Record<string, PropertyValidation> = {
 export function validateProperty(
   category: string, 
   property: string, 
-  value: any
+  value: unknown
 ): { isValid: boolean; message?: string } {
   const categoryRules = PROPERTY_VALIDATION_RULES[category];
   if (!categoryRules) {
@@ -339,7 +339,7 @@ export function validateProperty(
 /**
  * 合併屬性，移除未定義的值
  */
-export function mergeProperties<T extends Record<string, any>>(
+export function mergeProperties<T extends Record<string, unknown>>(
   defaultProps: T,
   userProps: Partial<T>
 ): T {
@@ -358,8 +358,8 @@ export function mergeProperties<T extends Record<string, any>>(
 /**
  * 轉換屬性為 LINE Flex Message JSON 格式
  */
-export function convertPropertiesToLineFormat(properties: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {};
+export function convertPropertiesToLineFormat(properties: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   
   Object.keys(properties).forEach(key => {
     const value = properties[key];

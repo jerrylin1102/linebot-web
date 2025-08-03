@@ -24,6 +24,55 @@ interface ChartData {
   label: string;
 }
 
+interface PerformanceReport {
+  score: number;
+  overall: string;
+  budgetViolations: unknown[];
+  metrics: Array<{ name: string; value: number }>;
+  alerts: Array<{ type: string; message: string; recommendation?: string; timestamp: number }>;
+  recommendations: string[];
+}
+
+interface MemoryReport {
+  current: {
+    usedJSHeapSize: number;
+    components: Map<string, number>;
+    listeners: Map<string, number>;
+  };
+  alerts: unknown[];
+  leaks: Array<{
+    component?: string;
+    growthRate: number;
+    confidence: number;
+  }>;
+  recommendations: string[];
+}
+
+interface NetworkStats {
+  averageResponseTime: number;
+  cacheHits: number;
+  cacheMisses: number;
+  totalRequests: number;
+  failedRequests: number;
+}
+
+interface CacheStats {
+  [key: string]: {
+    entryCount: number;
+    totalSize: number;
+  };
+}
+
+interface OptimizationResult {
+  type: string;
+  timestamp: number;
+  result: {
+    message?: string;
+    cleaned?: number;
+    savings?: number;
+  };
+}
+
 const MetricChart: React.FC<{
   data: ChartData[];
   color: string;
@@ -105,10 +154,10 @@ const MetricChart: React.FC<{
 };
 
 const PerformanceOverview: React.FC = () => {
-  const [performanceReport, setPerformanceReport] = useState<any>(null);
-  const [memoryReport, setMemoryReport] = useState<any>(null);
-  const [networkStats, setNetworkStats] = useState<any>(null);
-  const [cacheStats, setCacheStats] = useState<any>(null);
+  const [performanceReport, setPerformanceReport] = useState<PerformanceReport | null>(null);
+  const [memoryReport, setMemoryReport] = useState<MemoryReport | null>(null);
+  const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
 
   useEffect(() => {
     const updateReports = () => {
@@ -233,10 +282,10 @@ const PerformanceOverview: React.FC = () => {
                 活動快取
               </div>
               <div className="text-xs text-gray-500">
-                總條目: {Object.values(cacheStats).reduce((sum: number, stats: any) => sum + stats.entryCount, 0)}
+                總條目: {Object.values(cacheStats).reduce((sum: number, stats) => sum + stats.entryCount, 0)}
               </div>
               <div className="text-xs text-gray-500">
-                總大小: {Math.round(Object.values(cacheStats).reduce((sum: number, stats: any) => sum + stats.totalSize, 0) / 1024)} KB
+                總大小: {Math.round(Object.values(cacheStats).reduce((sum: number, stats) => sum + stats.totalSize, 0) / 1024)} KB
               </div>
             </>
           )}
@@ -324,8 +373,8 @@ const PerformanceMetrics: React.FC = () => {
 };
 
 const AlertsAndRecommendations: React.FC = () => {
-  const [performanceReport, setPerformanceReport] = useState<any>(null);
-  const [memoryReport, setMemoryReport] = useState<any>(null);
+  const [performanceReport, setPerformanceReport] = useState<PerformanceReport | null>(null);
+  const [memoryReport, setMemoryReport] = useState<MemoryReport | null>(null);
 
   useEffect(() => {
     const updateReports = () => {
@@ -416,7 +465,7 @@ const AlertsAndRecommendations: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {memoryReport.leaks.map((leak: any, index: number) => (
+              {memoryReport.leaks.map((leak, index: number) => (
                 <Alert key={index} variant="destructive">
                   <AlertDescription>
                     <div className="flex justify-between items-start">
@@ -446,7 +495,7 @@ const AlertsAndRecommendations: React.FC = () => {
 
 const ActionsPanel: React.FC = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [lastOptimization, setLastOptimization] = useState<any>(null);
+  const [lastOptimization, setLastOptimization] = useState<OptimizationResult | null>(null);
 
   const handleOptimizeMemory = async () => {
     setIsOptimizing(true);

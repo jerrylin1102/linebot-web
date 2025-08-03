@@ -4,7 +4,6 @@
  */
 
 import { 
-  FlexSize, FlexWeight, FlexAlign, FlexGravity, FlexSpacing,
   BoxAdvancedProperties, TextAdvancedProperties, 
   ButtonAdvancedProperties, ImageAdvancedProperties
 } from '../types/flexProperties';
@@ -152,7 +151,7 @@ export function validateEnum<T extends readonly string[]>(
     return { property: propertyName, isValid: true, severity: "info" };
   }
   
-  const isValid = allowedValues.includes(value as any);
+  const isValid = allowedValues.includes(value as unknown);
   
   return {
     property: propertyName,
@@ -426,7 +425,7 @@ function compileValidationResults(results: PropertyValidationResult[]): Validati
 /**
  * 驗證完整的 Flex Message 結構
  */
-export function validateFlexMessage(flexMessage: any): ValidationResult {
+export function validateFlexMessage(flexMessage: unknown): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   

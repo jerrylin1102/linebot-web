@@ -2,7 +2,7 @@
  * 性能測試和基準測試系統 - 自動化性能測試、回歸檢測、基準建立
  */
 
-import { globalPerformanceMonitor } from './PerformanceMonitor';
+// import { globalPerformanceMonitor } from './PerformanceMonitor';
 import { globalMemoryManager } from './MemoryManager';
 import { globalCacheManager } from './CacheService';
 import { globalNetworkOptimizer } from './NetworkOptimizer';
@@ -429,9 +429,9 @@ export class PerformanceTester {
     return {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
-      memory: (navigator as any).deviceMemory || 0,
+      memory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory || 0,
       cores: navigator.hardwareConcurrency || 0,
-      connection: (navigator as any).connection?.effectiveType || 'unknown',
+      connection: (navigator as Navigator & { connection?: { effectiveType: string } }).connection?.effectiveType || 'unknown',
       viewport: {
         width: window.innerWidth,
         height: window.innerHeight
@@ -536,8 +536,8 @@ export class PerformanceTester {
           const networkStats = globalNetworkOptimizer.getStats();
           const cacheStats = globalCacheManager.getAllStats();
           
-          const totalCacheSize = Object.values(cacheStats).reduce((sum: number, stats: any) => sum + stats.totalSize, 0);
-          const totalEntries = Object.values(cacheStats).reduce((sum: number, stats: any) => sum + stats.entryCount, 0);
+          const totalCacheSize = Object.values(cacheStats).reduce((sum: number, stats: { totalSize: number }) => sum + stats.totalSize, 0);
+          const totalEntries = Object.values(cacheStats).reduce((sum: number, stats: { entryCount: number }) => sum + stats.entryCount, 0);
           
           return {
             testId: 'cache_performance',

@@ -21,18 +21,18 @@ interface UseDataCacheReturn {
   // 邏輯模板相關
   getLogicTemplatesSummary: (botId: string) => Promise<LogicTemplateSummary[]>;
   getLogicTemplate: (templateId: string) => Promise<LogicTemplate>;
-  createLogicTemplate: (botId: string, data: any) => Promise<LogicTemplate>;
-  updateLogicTemplate: (templateId: string, data: any) => Promise<LogicTemplate>;
+  createLogicTemplate: (botId: string, data: unknown) => Promise<LogicTemplate>;
+  updateLogicTemplate: (templateId: string, data: unknown) => Promise<LogicTemplate>;
   
   // FlexMessage 相關
   getFlexMessages: () => Promise<FlexMessage[]>;
   getFlexMessagesSummary: () => Promise<FlexMessageSummary[]>;
-  createFlexMessage: (data: any) => Promise<FlexMessage>;
-  updateFlexMessage: (messageId: string, data: any) => Promise<FlexMessage>;
+  createFlexMessage: (data: unknown) => Promise<FlexMessage>;
+  updateFlexMessage: (messageId: string, data: unknown) => Promise<FlexMessage>;
   
   // 快取管理
   invalidateCache: (type: 'bot' | 'logic' | 'flex' | 'all', key?: string) => void;
-  getCacheStats: () => any;
+  getCacheStats: () => unknown;
   
   // 狀態
   loading: boolean;
@@ -96,14 +96,14 @@ export const useDataCache = (): UseDataCacheReturn => {
     );
   }, [dataCache, withLoadingAndError]);
   
-  const createLogicTemplate = useCallback(async (botId: string, data: any): Promise<LogicTemplate> => {
+  const createLogicTemplate = useCallback(async (botId: string, data: unknown): Promise<LogicTemplate> => {
     return withLoadingAndError(
       () => dataCache.createLogicTemplate(botId, data),
       `createLogicTemplate(${botId})`
     );
   }, [dataCache, withLoadingAndError]);
   
-  const updateLogicTemplate = useCallback(async (templateId: string, data: any): Promise<LogicTemplate> => {
+  const updateLogicTemplate = useCallback(async (templateId: string, data: unknown): Promise<LogicTemplate> => {
     return withLoadingAndError(
       () => dataCache.updateLogicTemplate(templateId, data),
       `updateLogicTemplate(${templateId})`
@@ -125,14 +125,14 @@ export const useDataCache = (): UseDataCacheReturn => {
     );
   }, [dataCache, withLoadingAndError]);
   
-  const createFlexMessage = useCallback(async (data: any): Promise<FlexMessage> => {
+  const createFlexMessage = useCallback(async (data: unknown): Promise<FlexMessage> => {
     return withLoadingAndError(
       () => dataCache.createFlexMessage(data),
       'createFlexMessage'
     );
   }, [dataCache, withLoadingAndError]);
   
-  const updateFlexMessage = useCallback(async (messageId: string, data: any): Promise<FlexMessage> => {
+  const updateFlexMessage = useCallback(async (messageId: string, data: unknown): Promise<FlexMessage> => {
     return withLoadingAndError(
       () => dataCache.updateFlexMessage(messageId, data),
       `updateFlexMessage(${messageId})`

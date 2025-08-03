@@ -106,7 +106,7 @@ export const VisualBotEditor: React.FC = () => {
   };
 
   // 監聽積木變更，標記為未儲存
-  const isInitialLoadRef = useRef(true);
+  const _isInitialLoadRef = useRef(true);
 
   // 頁面離開前的確認
   useEffect(() => {

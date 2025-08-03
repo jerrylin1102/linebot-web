@@ -48,7 +48,7 @@ export class DataCacheService {
   private flexMessageSummaryCache: CacheItem<FlexMessageSummary[]> | null = null;
   
   // 進行中的請求追蹤，避免重複請求
-  private pendingRequests = new Map<string, PendingRequest<any>>();
+  private pendingRequests = new Map<string, PendingRequest<unknown>>();
   
   private constructor() {
     // 每5分鐘清理一次過期快取
@@ -243,7 +243,7 @@ export class DataCacheService {
   /**
    * 創建新的邏輯模板（會更新相關快取）
    */
-  async createLogicTemplate(botId: string, data: any): Promise<LogicTemplate> {
+  async createLogicTemplate(botId: string, data: Record<string, unknown>): Promise<LogicTemplate> {
     const result = await VisualEditorApi.createLogicTemplate(botId, data);
     
     // 清理相關快取，強制下次重新載入
@@ -257,7 +257,7 @@ export class DataCacheService {
   /**
    * 更新邏輯模板（會更新相關快取）
    */
-  async updateLogicTemplate(templateId: string, data: any): Promise<LogicTemplate> {
+  async updateLogicTemplate(templateId: string, data: Record<string, unknown>): Promise<LogicTemplate> {
     const result = await VisualEditorApi.updateLogicTemplate(templateId, data);
     
     // 更新快取
@@ -270,7 +270,7 @@ export class DataCacheService {
   /**
    * 創建新的FLEX訊息（會更新相關快取）
    */
-  async createFlexMessage(data: any): Promise<FlexMessage> {
+  async createFlexMessage(data: Record<string, unknown>): Promise<FlexMessage> {
     const result = await VisualEditorApi.createFlexMessage(data);
     
     // 清理相關快取，強制下次重新載入
@@ -283,7 +283,7 @@ export class DataCacheService {
   /**
    * 更新FLEX訊息（會更新相關快取）
    */
-  async updateFlexMessage(messageId: string, data: any): Promise<FlexMessage> {
+  async updateFlexMessage(messageId: string, data: Record<string, unknown>): Promise<FlexMessage> {
     const result = await VisualEditorApi.updateFlexMessage(messageId, data);
     
     // 清理相關快取，強制下次重新載入

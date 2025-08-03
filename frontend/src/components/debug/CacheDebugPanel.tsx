@@ -3,7 +3,7 @@
  * 用於開發環境監控快取狀態和性能
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { RefreshCw, Trash2, BarChart3 } from 'lucide-react';
 import DataCacheService from '../../services/DataCacheService';
@@ -32,10 +32,10 @@ const CacheDebugPanel: React.FC<CacheDebugPanelProps> = ({
   const dataCache = DataCacheService.getInstance();
   
   // 更新快取統計
-  const updateStats = () => {
+  const updateStats = useCallback(() => {
     const newStats = dataCache.getCacheStats();
     setStats(newStats);
-  };
+  }, [dataCache]);
   
   // 清理所有快取
   const clearAllCache = () => {
@@ -72,7 +72,7 @@ const CacheDebugPanel: React.FC<CacheDebugPanelProps> = ({
     if (isVisible) {
       updateStats();
     }
-  }, [isVisible]);
+  }, [isVisible, updateStats]);
   
   // 組件卸載時清理定時器
   useEffect(() => {

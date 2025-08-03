@@ -5,6 +5,17 @@
 
 import { UnifiedBlock, BlockCategory } from "../types/block";
 import { migrateBlock } from "./blockCompatibility";
+import { LineAction } from "../types/lineActions";
+
+// Quick Reply 相關類型
+interface QuickReplyItem {
+  action: LineAction;
+}
+
+// Template Action 相關類型
+interface TemplateAction extends LineAction {
+  label?: string;
+}
 
 // 向後相容的舊格式介面
 interface LegacyBlock {
@@ -409,7 +420,7 @@ ${indent}    sticker_id="${replyBlock.blockData.stickerId || "1988"}"
 ${indent}))
 `;
 
-    case "template":
+    case "template": {
       const templateType = replyBlock.blockData.templateType || "buttons";
       const actions = generateTemplateActions(replyBlock.blockData.actions || [], indent);
       return `${indent}# Template Message - ${templateType}
@@ -424,8 +435,9 @@ ${indent}    )
 ${indent})
 ${indent}reply_messages.append(template_message)
 `;
+    }
 
-    case "quickreply":
+    case "quickreply": {
       const quickReplyItems = generateQuickReplyItems(replyBlock.blockData.quickReplyItems || [], indent);
       return `${indent}# Quick Reply Message
 ${indent}quick_reply = QuickReply(items=[
@@ -437,6 +449,7 @@ ${indent}    quick_reply=quick_reply
 ${indent})
 ${indent}reply_messages.append(text_message)
 `;
+    }
 
     default:
       return `${indent}reply_messages.append(TextSendMessage(text="未支援的回覆類型: ${replyType}"))
@@ -447,7 +460,7 @@ ${indent}reply_messages.append(text_message)
 /**
  * 生成模板Action代碼
  */
-function generateTemplateActions(actions: any[], indent: string): string {
+function generateTemplateActions(actions: TemplateAction[], indent: string): string {
   if (!actions || actions.length === 0) {
     return `${indent}            MessageAction(label="選項1", text="用戶選擇了選項1"),
 ${indent}            URIAction(label="開啟連結", uri="https://example.com")`;
@@ -504,7 +517,7 @@ ${indent}            )`;
 /**
  * 生成Quick Reply項目代碼
  */
-function generateQuickReplyItems(items: any[], indent: string): string {
+function generateQuickReplyItems(items: QuickReplyItem[], indent: string): string {
   if (!items || items.length === 0) {
     return `${indent}    QuickReplyButton(action=MessageAction(label="是", text="是")),
 ${indent}    QuickReplyButton(action=MessageAction(label="否", text="否"))`;
@@ -558,7 +571,7 @@ function generateControlCode(controlBlock: UnifiedBlock, indent: string = "    "
 
   switch (controlType) {
     case "if":
-    case "condition":
+    case "condition": {
       const condition = controlBlock.blockData.condition || "user_message == '條件'";
       return `${indent}# 條件判斷邏輯
 ${indent}if ${condition}:
@@ -568,8 +581,9 @@ ${indent}else:
 ${indent}    # 條件為假時的處理
 ${indent}    pass
 `;
+    }
 
-    case "loop":
+    case "loop": {
       const loopCount = controlBlock.blockData.count || 3;
       const loopVariable = controlBlock.blockData.variable || "i";
       return `${indent}# 迴圈處理邏輯
@@ -577,13 +591,15 @@ ${indent}for ${loopVariable} in range(${loopCount}):
 ${indent}    # 重複執行的邏輯
 ${indent}    pass
 `;
+    }
 
-    case "wait":
+    case "wait": {
       const waitTime = controlBlock.blockData.time || 1;
       return `${indent}# 等待處理邏輯
 ${indent}import time
 ${indent}time.sleep(${waitTime})
 `;
+    }
 
     case "try":
       return `${indent}# 錯誤處理邏輯
@@ -595,7 +611,7 @@ ${indent}    # 錯誤處理
 ${indent}    print(f"發生錯誤: {e}")
 `;
 
-    case "function":
+    case "function": {
       const functionName = controlBlock.blockData.functionName || "custom_function";
       return `${indent}# 自定義函數調用
 ${indent}def ${functionName}():
@@ -604,6 +620,7 @@ ${indent}    pass
 ${indent}
 ${indent}${functionName}()
 `;
+    }
 
     default:
       return `${indent}# 未知的控制類型: ${controlType}
@@ -657,7 +674,7 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "button":
+          case "button": {
             const action = content.blockData.action || {
               type: "postback",
               label: content.blockData.title || "按鈕",
@@ -670,7 +687,8 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "image":
+          }
+          case "image": {
             const imageUrl = content.blockData.url || "https://via.placeholder.com/300x200";
             const imageProperties = content.blockData.properties || {};
             
@@ -683,7 +701,8 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "video":
+          }
+          case "video": {
             const videoUrl = content.blockData.url || "https://example.com/video.mp4";
             const previewUrl = content.blockData.previewUrl || "https://example.com/preview.jpg";
             const videoProperties = content.blockData.properties || {};
@@ -697,7 +716,8 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "icon":
+          }
+          case "icon": {
             const iconUrl = content.blockData.url || "https://example.com/icon.png";
             const iconProperties = content.blockData.properties || {};
             
@@ -708,7 +728,8 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "span":
+          }
+          case "span": {
             const spanText = content.blockData.text || "範例文字";
             const spanProperties = content.blockData.properties || {};
             
@@ -723,7 +744,8 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
-          case "separator":
+          }
+          case "separator": {
             const separatorProperties = content.blockData.properties || {};
             
             code += `                {
@@ -733,6 +755,7 @@ def flex_message_${Date.now() + index}():
                 },
 `;
             break;
+          }
         }
       });
 

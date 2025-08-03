@@ -13,7 +13,6 @@ import {
   UnifiedError,
   ErrorSeverity,
   ErrorCategory,
-  RecoveryStrategy,
   ErrorBoundaryState,
 } from "@/types/error";
 
@@ -55,7 +54,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ExtendedErrorBoundaryS
     };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<ExtendedErrorBoundaryState> {
+  static getDerivedStateFromError(_error: Error): Partial<ExtendedErrorBoundaryState> {
     return {
       hasError: true,
     };
@@ -91,7 +90,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ExtendedErrorBoundaryS
     }
   }
 
-  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+  componentDidUpdate(_prevProps: ErrorBoundaryProps) {
     const { resetKeys } = this.props;
     const { lastResetKeys } = this.state;
     
@@ -138,7 +137,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ExtendedErrorBoundaryS
         isRetrying: false,
         isRecovering: false,
       });
-    } catch (retryError) {
+    } catch (_retryError) {
       this.setState({ isRetrying: false });
     }
   };

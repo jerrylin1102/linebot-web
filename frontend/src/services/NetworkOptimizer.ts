@@ -9,7 +9,7 @@ export interface RequestConfig {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   timeout?: number;
   retries?: number;
   cache?: boolean;
@@ -21,8 +21,8 @@ export interface RequestConfig {
 export interface BatchRequest {
   id: string;
   config: RequestConfig;
-  resolve: (value: any) => void;
-  reject: (error: any) => void;
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
 }
 
 export interface NetworkStats {
@@ -391,7 +391,7 @@ export class NetworkOptimizer {
     for (const item of queue) {
       try {
         await this.request(item.config);
-      } catch (error) {
+      } catch (_error) {
         // 重試邏輯
         if (item.retries < 3) {
           item.retries++;
@@ -514,7 +514,7 @@ export class RequestInterceptor {
           statusText: 'OK',
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (error) {
+      } catch (_error) {
         // 回退到原始 fetch
         return originalFetch(input, init);
       }

@@ -3,7 +3,7 @@
  * 提供可靠、高效的積木載入和初始化機制
  */
 
-import { BlockDefinition, BlockRegistryItem } from "./types";
+import { BlockDefinition } from "./types";
 import { blockRegistry } from "./registry";
 
 /**
@@ -139,7 +139,7 @@ export type InitializationEventType =
 export interface InitializationEvent {
   type: InitializationEventType;
   timestamp: Date;
-  data?: any;
+  data?: unknown;
   blockId?: string;
 }
 
@@ -496,7 +496,7 @@ export class BlockInitializationManager {
     console.log("📦 載入積木模組...");
     
     const allDefinitions: BlockDefinition[] = [];
-    const moduleLoadPromises: Promise<any>[] = [];
+    const _moduleLoadPromises: Promise<unknown>[] = [];
 
     try {
       // 載入所有積木模組
@@ -803,7 +803,7 @@ export class BlockInitializationManager {
   /**
    * 發出事件
    */
-  private emitEvent(eventType: InitializationEventType, data?: any): void {
+  private emitEvent(eventType: InitializationEventType, data?: unknown): void {
     const event: InitializationEvent = {
       type: eventType,
       timestamp: new Date(),

@@ -3,7 +3,7 @@
  * 提供詳細的錯誤日志顯示和篩選功能
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
@@ -13,13 +13,8 @@ import ErrorManager from "../../services/ErrorManager";
 import { 
   FileText, 
   Search, 
-  Filter, 
   Download, 
   Trash2,
-  Calendar,
-  AlertCircle,
-  Eye,
-  EyeOff,
   Copy,
   ChevronDown,
   ChevronUp
@@ -54,7 +49,7 @@ const ErrorLogger: React.FC<ErrorLoggerProps> = ({
   const errorManager = ErrorManager.getInstance();
 
   // 載入錯誤日志
-  const loadErrors = async () => {
+  const loadErrors = useCallback(async () => {
     setIsLoading(true);
     try {
       const errorHistory = errorManager.getErrorHistory();
@@ -65,7 +60,7 @@ const ErrorLogger: React.FC<ErrorLoggerProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [errorManager, maxEntries]);
 
   // 篩選錯誤
   const filterErrors = (errors: UnifiedError[], filters: FilterOptions) => {
@@ -217,7 +212,7 @@ const ErrorLogger: React.FC<ErrorLoggerProps> = ({
       const interval = setInterval(loadErrors, refreshInterval);
       return () => clearInterval(interval);
     }
-  }, [autoRefresh, refreshInterval, maxEntries]);
+  }, [loadErrors, autoRefresh, refreshInterval]);
 
   // 應用篩選
   useEffect(() => {

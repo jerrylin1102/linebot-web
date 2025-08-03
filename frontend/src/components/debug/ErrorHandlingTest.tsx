@@ -66,8 +66,8 @@ const ErrorHandlingTest: React.FC = () => {
       const error = new Error("測試基礎錯誤處理");
       await handleError(error, { component: "ErrorHandlingTest", action: "basicTest" });
       addTestResult("基礎錯誤處理", true, "錯誤成功處理");
-    } catch (error) {
-      addTestResult("基礎錯誤處理", false, `測試失敗: ${(error as Error).message}`);
+    } catch (_error) {
+      addTestResult("基礎錯誤處理", false, `測試失敗: ${(_error as Error).message}`);
     }
   };
 
@@ -81,7 +81,7 @@ const ErrorHandlingTest: React.FC = () => {
         { component: "ErrorHandlingTest", action: "asyncTest" }
       );
       addTestResult("異步錯誤處理", false, "應該拋出錯誤但沒有");
-    } catch (error) {
+    } catch (_error) {
       addTestResult("異步錯誤處理", true, "異步錯誤成功捕獲");
     }
   };
@@ -89,10 +89,10 @@ const ErrorHandlingTest: React.FC = () => {
   // 積木錯誤處理測試
   const testBlockErrorHandling = async () => {
     try {
-      const testBlock = {
+      const _testBlock = {
         id: "test-block",
         blockType: "test-block-type",
-        category: "flex-content" as any,
+        category: "flex-content" as unknown,
         blockData: {},
         compatibility: [],
       };
@@ -115,7 +115,7 @@ const ErrorHandlingTest: React.FC = () => {
       const testBlocks = [{
         id: "test-preview-block",
         blockType: "flex-content",
-        category: "flex-content" as any,
+        category: "flex-content" as unknown,
         blockData: { invalid: "data" },
         compatibility: [],
       }];
@@ -137,7 +137,7 @@ const ErrorHandlingTest: React.FC = () => {
     try {
       // 觸發 React 錯誤
       throw new Error("測試錯誤邊界");
-    } catch (error) {
+    } catch (_error) {
       addTestResult("錯誤邊界", true, "錯誤邊界測試完成（需要檢查 UI）");
     }
   };

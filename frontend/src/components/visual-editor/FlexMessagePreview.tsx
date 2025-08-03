@@ -142,11 +142,11 @@ class FlexMessageGenerator {
 
     flexMessage.body.contents.forEach((content: Record<string, unknown>) => {
       switch (content.type) {
-        case "text":
+        case "text": {
           let textContent = content.text || "";
           // 處理 span contents
           if (content.contents && Array.isArray(content.contents)) {
-            textContent = content.contents.map((span: any) => {
+            textContent = content.contents.map((span: { type?: string; color?: string; size?: string; weight?: string; text?: string }) => {
               if (span.type === "span") {
                 const spanStyle = [
                   span.color ? `color: ${span.color}` : "",
@@ -162,6 +162,7 @@ class FlexMessageGenerator {
           }
           html += `<div class="mb-2" style="color: ${content.color}; font-size: ${this.getSizeInPx(content.size)}; font-weight: ${content.weight}">${textContent}</div>`;
           break;
+        }
         case "image":
           html += `<img src="${content.url}" class="w-full rounded mb-2" style="max-height: 200px; object-fit: cover;" />`;
           break;
@@ -181,7 +182,7 @@ class FlexMessageGenerator {
           html += '<div class="w-0 h-0 border-l-4 border-l-gray-800 border-t-2 border-t-transparent border-b-2 border-b-transparent ml-1"></div>';
           html += '</div></div></div>';
           break;
-        case "icon":
+        case "icon": {
           const iconSizeMap: { [key: string]: string } = {
             xs: "16px", sm: "20px", md: "24px", lg: "28px", xl: "32px",
             xxl: "36px", "3xl": "40px", "4xl": "44px", "5xl": "48px"
@@ -189,6 +190,7 @@ class FlexMessageGenerator {
           const iconSize = iconSizeMap[content.size] || "24px";
           html += `<img src="${content.url}" class="inline-block" style="width: ${iconSize}; height: ${iconSize}; margin: ${content.margin || 'none'};" />`;
           break;
+        }
       }
     });
 
@@ -263,7 +265,7 @@ const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks, onError
             const unifiedBlocks = blocks.map((block, index) => ({
               id: `block-${index}`,
               blockType: block.blockType,
-              category: "flex-content" as any,
+              category: "flex-content" as unknown,
               blockData: block.blockData,
               compatibility: [],
             }));

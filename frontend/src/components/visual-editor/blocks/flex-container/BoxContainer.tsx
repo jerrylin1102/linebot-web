@@ -3,8 +3,7 @@ import { BlockDefinition } from "../types";
 import { BlockCategory, WorkspaceContext } from "../../../../types/block";
 import { 
   DEFAULT_BOX_PROPERTIES, 
-  BoxAdvancedProperties,
-  PROPERTY_VALIDATION_RULES 
+  BoxAdvancedProperties
 } from "../../../../types/flexProperties";
 
 export const boxContainer: BlockDefinition = {

@@ -5,7 +5,6 @@
 
 import ErrorManager from "./ErrorManager";
 import {
-  UnifiedError,
   ErrorSeverity,
   ErrorCategory,
   RecoveryStrategy,
@@ -31,25 +30,6 @@ interface BlockErrorContext {
   additional?: Record<string, unknown>;
 }
 
-interface BlockLoadError {
-  blockType: string;
-  reason: string;
-  isRetryable: boolean;
-}
-
-interface BlockCompatibilityError {
-  sourceBlock: UnifiedBlock;
-  targetWorkspace: WorkspaceContext;
-  violation: string;
-  suggestion?: string;
-}
-
-interface BlockOperationError {
-  operation: string;
-  blockId: string;
-  reason: string;
-  canRecover: boolean;
-}
 
 class BlockErrorHandler {
   private static instance: BlockErrorHandler;
@@ -515,7 +495,7 @@ class BlockErrorHandler {
   /**
    * 檢查積木依賴
    */
-  private checkDependencies(block: UnifiedBlock, dependencies: BlockCategory[]): boolean {
+  private checkDependencies(_block: UnifiedBlock, _dependencies: BlockCategory[]): boolean {
     // 這裡應該檢查積木的依賴關係
     // 簡化實現，實際應該根據工作區的積木配置來檢查
     return true;
@@ -526,8 +506,8 @@ class BlockErrorHandler {
    */
   private checkRestrictions(
     block: UnifiedBlock,
-    restrictions: any,
-    workspace: WorkspaceContext
+    restrictions: Record<string, unknown>,
+    _workspace: WorkspaceContext
   ): BlockValidationResult {
     // 檢查父積木需求
     if (restrictions.requiresParent && block.isNested && !block.parentId) {

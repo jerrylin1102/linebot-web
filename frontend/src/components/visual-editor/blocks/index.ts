@@ -11,9 +11,7 @@ export * from "./initialization";
 import { 
   blockInitializationManager,
   InitializationState,
-  InitializationResult,
-  InitializationError,
-  InitializationErrorType
+  InitializationResult
 } from "./initialization";
 import { blockRegistry } from "./registry";
 
@@ -120,7 +118,7 @@ export function configureBlockInitialization(config: {
  */
 export function addInitializationListener(
   eventType: 'state-changed' | 'progress-updated' | 'error-occurred' | 'initialization-completed',
-  listener: (event: any) => void
+  listener: (event: unknown) => void
 ): () => void {
   return blockInitializationManager.addEventListener(eventType, listener);
 }

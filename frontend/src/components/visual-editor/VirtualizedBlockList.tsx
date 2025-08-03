@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { FixedSizeList as List, VariableSizeList, areEqual } from 'react-window';
 import { blockDefinitionCache } from '../../services/CacheService';
 import { globalPerformanceMonitor } from '../../services/PerformanceMonitor';
-import { Block } from '../../types/block';
+import { UnifiedBlock as Block } from '../../types/block';
 
 interface VirtualizedBlockListProps {
   blocks: Block[];
@@ -87,7 +87,7 @@ const VariableBlockItem = React.memo<BlockItemProps>(({ index, style, data }) =>
   // 測量實際高度並更新虛擬列表
   useEffect(() => {
     if (itemRef.current) {
-      const height = itemRef.current.offsetHeight;
+      const _height = itemRef.current.offsetHeight;
       // 這裡可以通知父組件更新高度快取
     }
   }, []);
@@ -140,8 +140,8 @@ export const VirtualizedBlockList: React.FC<VirtualizedBlockListProps> = ({
   overscan = 5
 }) => {
   const [filteredBlocks, setFilteredBlocks] = useState<Block[]>([]);
-  const [isVariableHeight, setIsVariableHeight] = useState(false);
-  const listRef = useRef<any>(null);
+  const [isVariableHeight, _setIsVariableHeight] = useState(false);
+  const listRef = useRef<List | VariableSizeList | null>(null);
   const heightCache = useRef<Map<number, number>>(new Map());
 
   // 過濾和搜索積木
@@ -222,7 +222,7 @@ export const VirtualizedBlockList: React.FC<VirtualizedBlockListProps> = ({
   }, [filteredBlocks, resetHeightCache]);
 
   // 滾動到指定項目
-  const scrollToItem = useCallback((index: number) => {
+  const _scrollToItem = useCallback((index: number) => {
     if (listRef.current) {
       listRef.current.scrollToItem(index, 'center');
     }
@@ -287,63 +287,5 @@ export const VirtualizedBlockList: React.FC<VirtualizedBlockListProps> = ({
   );
 };
 
-// Hook for managing virtualized block list
-export const useVirtualizedBlockList = (
-  blocks: Block[],
-  options: {
-    searchTerm?: string;
-    categoryFilter?: string;
-    pageSize?: number;
-  } = {}
-) => {
-  const [visibleBlocks, setVisibleBlocks] = useState<Block[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const pageSize = options.pageSize || 50;
-
-  const loadMoreBlocks = useCallback(async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    
-    try {
-      await globalPerformanceMonitor.measureAsyncFunction('load_more_blocks', async () => {
-        // 模擬異步載入
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const currentLength = visibleBlocks.length;
-        const nextBlocks = blocks.slice(currentLength, currentLength + pageSize);
-        
-        if (nextBlocks.length > 0) {
-          setVisibleBlocks(prev => [...prev, ...nextBlocks]);
-        }
-        
-        setHasMore(currentLength + nextBlocks.length < blocks.length);
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [blocks, loading, hasMore, visibleBlocks.length, pageSize]);
-
-  // 重置可見積木
-  const resetBlocks = useCallback(() => {
-    const initialBlocks = blocks.slice(0, pageSize);
-    setVisibleBlocks(initialBlocks);
-    setHasMore(blocks.length > pageSize);
-  }, [blocks, pageSize]);
-
-  // 當積木或過濾條件變化時重置
-  useEffect(() => {
-    resetBlocks();
-  }, [resetBlocks, options.searchTerm, options.categoryFilter]);
-
-  return {
-    visibleBlocks,
-    hasMore,
-    loading,
-    loadMoreBlocks,
-    resetBlocks
-  };
-};
 
 export default VirtualizedBlockList;

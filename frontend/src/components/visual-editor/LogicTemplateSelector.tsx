@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -56,7 +56,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
   const { toast } = useToast();
 
   // 載入邏輯模板列表（使用快取服務）
-  const loadLogicTemplates = async (botId: string) => {
+  const loadLogicTemplates = useCallback(async (botId: string) => {
     if (!botId) {
       setLogicTemplates([]);
       return;
@@ -73,7 +73,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
     } finally {
       setIsLoadingLogicTemplates(false);
     }
-  };
+  }, [dataCache]);
 
   // 當選擇的 Bot 改變時，載入對應的邏輯模板
   useEffect(() => {
@@ -82,7 +82,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
     } else {
       setLogicTemplates([]);
     }
-  }, [selectedBotId]);
+  }, [selectedBotId, loadLogicTemplates]);
 
   // 創建新邏輯模板
   const handleCreateLogicTemplate = async () => {

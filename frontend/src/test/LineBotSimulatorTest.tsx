@@ -7,7 +7,7 @@ import React from 'react';
 import LineBotSimulator from '../components/visual-editor/LineBotSimulator';
 
 // 模擬包含新組件的FLEX訊息
-const mockFlexMessage = {
+const _mockFlexMessage = {
   id: "test-flex-1",
   name: "新組件測試",
   type: "flex",

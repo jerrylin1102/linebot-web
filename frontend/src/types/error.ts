@@ -120,7 +120,7 @@ export interface ErrorMonitoringConfig {
   enableConsoleLogging: boolean;
   maxLogEntries: number;
   logLevel: ErrorSeverity;
-  sensitiveDataFilter: (data: any) => any;
+  sensitiveDataFilter: (data: unknown) => unknown;
 }
 
 // 錯誤重試配置

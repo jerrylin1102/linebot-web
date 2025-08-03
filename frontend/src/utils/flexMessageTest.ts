@@ -21,6 +21,12 @@ import {
 import {
   BoxAdvancedProperties,
   TextAdvancedProperties,
+  ImageAdvancedProperties
+} from '../types/flexProperties';
+
+import {
+  BoxAdvancedProperties,
+  TextAdvancedProperties,
   ButtonAdvancedProperties,
   ImageAdvancedProperties
 } from '../types/flexProperties';
@@ -311,7 +317,7 @@ export function testEdgeCases(): boolean {
       {
         name: "無效枚舉值",
         test: () => {
-          const validation = validateTextProperties({ size: "invalid-size" } as any, "test");
+          const validation = validateTextProperties({ size: "invalid-size" } as TextAdvancedProperties, "test");
           return !validation.isValid && validation.errors.some(e => e.includes("值之一"));
         }
       },
@@ -355,7 +361,7 @@ export function runAllTests(): boolean {
   ];
   
   let totalPassed = 0;
-  let totalTests = tests.length;
+  const totalTests = tests.length;
   
   for (const test of tests) {
     console.log(`\n📋 執行測試: ${test.name}`);

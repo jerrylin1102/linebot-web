@@ -5,7 +5,6 @@
 
 import ErrorManager from "./ErrorManager";
 import {
-  UnifiedError,
   ErrorSeverity,
   ErrorCategory,
   RecoveryStrategy,
@@ -23,27 +22,6 @@ interface PreviewErrorContext {
   additional?: Record<string, unknown>;
 }
 
-interface CodeGenerationError {
-  blockId: string;
-  blockType: string;
-  reason: string;
-  isRetryable: boolean;
-  suggestions: string[];
-}
-
-interface PreviewRenderError {
-  component: string;
-  reason: string;
-  data?: any;
-  isDataRelated: boolean;
-}
-
-interface NetworkError {
-  endpoint: string;
-  status?: number;
-  statusText?: string;
-  timeout: boolean;
-}
 
 class PreviewErrorHandler {
   private static instance: PreviewErrorHandler;
@@ -152,7 +130,7 @@ class PreviewErrorHandler {
    * 處理預覽數據驗證錯誤
    */
   public async handlePreviewDataError(
-    invalidData: any,
+    invalidData: Record<string, unknown>,
     validationErrors: string[],
     context: Partial<PreviewErrorContext> = {}
   ): Promise<ErrorHandleResult> {
@@ -258,7 +236,7 @@ class PreviewErrorHandler {
   /**
    * 驗證預覽數據
    */
-  public validatePreviewData(data: any): { isValid: boolean; errors: string[] } {
+  public validatePreviewData(data: Record<string, unknown>): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!data) {
@@ -340,7 +318,7 @@ class PreviewErrorHandler {
   /**
    * 處理圖片載入錯誤
    */
-  private async handleImageLoadError(img: HTMLImageElement, error: any): Promise<void> {
+  private async handleImageLoadError(img: HTMLImageElement, error: Event | string): Promise<void> {
     if (img.closest("[data-flex-preview]")) {
       const unifiedError = this.errorManager.createError(
         "IMAGE_LOAD_FAILED",

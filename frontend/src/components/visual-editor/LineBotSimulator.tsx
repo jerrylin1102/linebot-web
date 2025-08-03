@@ -282,7 +282,7 @@ class FlexMessageRenderer {
     const decoration = span.decoration || "none";
     const style = span.style || "normal";
     
-    let spanStyles = `color: ${color}; font-size: ${size}; font-weight: ${weight}; text-decoration: ${decoration}; font-style: ${style};`;
+    const spanStyles = `color: ${color}; font-size: ${size}; font-weight: ${weight}; text-decoration: ${decoration}; font-style: ${style};`;
     
     return `<span style="${spanStyles}">${this.formatText(span.text || "")}</span>`;
   }

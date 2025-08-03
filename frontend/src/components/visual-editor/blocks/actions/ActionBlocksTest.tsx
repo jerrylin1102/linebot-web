@@ -39,7 +39,7 @@ export const ActionBlocksTest: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<LineAction>(
     createDefaultAction(ActionType.POSTBACK)
   );
-  const [testResults, setTestResults] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<unknown[]>([]);
 
   // 測試所有Action積木
   const testAllActionBlocks = () => {

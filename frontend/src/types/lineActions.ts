@@ -215,21 +215,23 @@ export function validateAction(action: Partial<LineAction>): { isValid: boolean;
 
   // 根據不同類型進行特定驗證
   switch (action.type) {
-    case ActionType.POSTBACK:
+    case ActionType.POSTBACK: {
       const postback = action as PostbackAction;
       if (!postback.data) {
         errors.push("Postback Action 需要 data 參數");
       }
       break;
+    }
 
-    case ActionType.MESSAGE:
+    case ActionType.MESSAGE: {
       const message = action as MessageAction;
       if (!message.text) {
         errors.push("Message Action 需要 text 參數");
       }
       break;
+    }
 
-    case ActionType.URI:
+    case ActionType.URI: {
       const uri = action as UriAction;
       if (!uri.uri) {
         errors.push("URI Action 需要 uri 參數");
@@ -237,8 +239,9 @@ export function validateAction(action: Partial<LineAction>): { isValid: boolean;
         errors.push("URI 格式不正確");
       }
       break;
+    }
 
-    case ActionType.DATETIME_PICKER:
+    case ActionType.DATETIME_PICKER: {
       const datetime = action as DatetimePickerAction;
       if (!datetime.data) {
         errors.push("Datetime Picker Action 需要 data 參數");
@@ -250,8 +253,9 @@ export function validateAction(action: Partial<LineAction>): { isValid: boolean;
         errors.push("Datetime Picker mode 必須是 date、time 或 datetime");
       }
       break;
+    }
 
-    case ActionType.RICHMENU_SWITCH:
+    case ActionType.RICHMENU_SWITCH: {
       const richmenu = action as RichMenuSwitchAction;
       if (!richmenu.richMenuAliasId) {
         errors.push("Rich Menu Switch Action 需要 richMenuAliasId 參數");
@@ -260,13 +264,15 @@ export function validateAction(action: Partial<LineAction>): { isValid: boolean;
         errors.push("Rich Menu Switch Action 需要 data 參數");
       }
       break;
+    }
 
-    case ActionType.CLIPBOARD:
+    case ActionType.CLIPBOARD: {
       const clipboard = action as ClipboardAction;
       if (!clipboard.clipboardText) {
         errors.push("Clipboard Action 需要 clipboardText 參數");
       }
       break;
+    }
   }
 
   return { isValid: errors.length === 0, errors };

@@ -14,7 +14,7 @@ export const separatorContent: BlockDefinition = {
   displayName: "分隔線",
   description: "Flex Message 中的分隔線元件",
   icon: Minus,
-  color: "bg-blue-500",
+  color: "bg-teal-500",
   compatibility: [WorkspaceContext.LOGIC, WorkspaceContext.FLEX],
   defaultData: {
     title: "分隔線",

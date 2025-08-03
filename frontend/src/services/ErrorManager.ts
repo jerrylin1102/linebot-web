@@ -163,10 +163,10 @@ class ErrorManager {
   /**
    * 重試錯誤操作
    */
-  public async retryError(
+  public async retryError<T>(
     error: UnifiedError,
-    operation: () => Promise<any>
-  ): Promise<any> {
+    operation: () => Promise<T>
+  ): Promise<T> {
     if (!error.isRetryable || (error.retryCount ?? 0) >= (error.maxRetries ?? 0)) {
       throw error;
     }
@@ -180,7 +180,7 @@ class ErrorManager {
       const result = await operation();
       this.logRetrySuccess(error);
       return result;
-    } catch (retryError) {
+    } catch (_retryError) {
       if (error.retryCount >= (error.maxRetries ?? 0)) {
         this.logRetryFailure(error);
         throw error;
@@ -382,7 +382,7 @@ class ErrorManager {
   /**
    * 處理認證錯誤
    */
-  private async handleAuthError(error: UnifiedError): Promise<ErrorHandleResult> {
+  private async handleAuthError(_error: UnifiedError): Promise<ErrorHandleResult> {
     return {
       success: false,
       recovery: RecoveryStrategy.REDIRECT,
@@ -475,7 +475,7 @@ class ErrorManager {
     // 本地存儲
     if (this.monitoringConfig.enableLocalStorage) {
       try {
-        const filtered = this.monitoringConfig.sensitiveDataFilter(error);
+        const _filtered = this.monitoringConfig.sensitiveDataFilter(error);
         localStorage.setItem("error_history", JSON.stringify(this.errorHistory.map(e => 
           this.monitoringConfig.sensitiveDataFilter(e)
         )));
@@ -581,7 +581,7 @@ class ErrorManager {
   /**
    * 確定錯誤嚴重程度
    */
-  private determineSeverity(category: ErrorCategory, error: Error): ErrorSeverity {
+  private determineSeverity(category: ErrorCategory, _error: Error): ErrorSeverity {
     if (category === ErrorCategory.AUTHENTICATION) {
       return ErrorSeverity.HIGH;
     }
@@ -619,7 +619,7 @@ class ErrorManager {
   /**
    * 過濾敏感數據
    */
-  private filterSensitiveData(data: any): any {
+  private filterSensitiveData(data: unknown): unknown {
     const sensitiveKeys = ["password", "token", "secret", "key", "auth"];
     
     if (typeof data !== "object" || data === null) {
@@ -642,7 +642,7 @@ class ErrorManager {
   /**
    * 發送到遠程日誌服務
    */
-  private async sendToRemoteLogging(error: UnifiedError): Promise<void> {
+  private async sendToRemoteLogging(_error: UnifiedError): Promise<void> {
     try {
       // TODO: 實現遠程日誌服務
       // await fetch("/api/logs/error", {
