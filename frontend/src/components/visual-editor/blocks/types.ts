@@ -95,7 +95,7 @@ export interface BlockConfigOption {
   label: string;
 
   /** 選項類型 */
-  type: "text" | "number" | "boolean" | "select" | "textarea";
+  type: "text" | "number" | "boolean" | "select" | "textarea" | "file-upload" | "drag-drop-zone" | "slider" | "multi-select" | "button" | "array-editor";
 
   /** 預設值 */
   defaultValue?: unknown;
@@ -115,6 +115,96 @@ export interface BlockConfigOption {
     max?: number;
     pattern?: string | RegExp;
     message?: string;
+  };
+
+  /** 條件顯示邏輯 */
+  conditionalLogic?: {
+    /** 依賴的欄位鍵名 */
+    dependsOn: string;
+    /** 條件類型 */
+    condition: "equals" | "not-equals" | "includes" | "not-includes" | "greater-than" | "less-than";
+    /** 比較值 */
+    value: unknown;
+  };
+
+  /** 檔案上傳特定配置 */
+  fileUpload?: {
+    /** 允許的檔案類型 */
+    accept?: string;
+    /** 最大檔案大小（位元組） */
+    maxSize?: number;
+    /** 是否允許多檔案上傳 */
+    multiple?: boolean;
+    /** 上傳端點 */
+    uploadEndpoint?: string;
+  };
+
+  /** 滑桿特定配置 */
+  slider?: {
+    /** 最小值 */
+    min: number;
+    /** 最大值 */
+    max: number;
+    /** 步進值 */
+    step?: number;
+    /** 顯示刻度 */
+    showMarks?: boolean;
+    /** 自定義標記 */
+    marks?: Array<{ value: number; label: string }>;
+  };
+
+  /** 多選特定配置 */
+  multiSelect?: {
+    /** 最大選擇數量 */
+    maxSelections?: number;
+    /** 是否允許自定義標籤 */
+    allowCustomTags?: boolean;
+    /** 搜尋功能 */
+    searchable?: boolean;
+  };
+
+  /** 按鈕特定配置 */
+  button?: {
+    /** 按鈕變體 */
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    /** 按鈕大小 */
+    size?: "default" | "sm" | "lg";
+    /** 點擊動作類型 */
+    actionType?: "open-dialog" | "open-drawer" | "navigate" | "custom";
+    /** 動作參數 */
+    actionParams?: Record<string, unknown>;
+  };
+
+  /** 陣列編輯器特定配置 */
+  arrayEditor?: {
+    /** 陣列項目類型 */
+    itemType: "text" | "object" | "number" | "boolean";
+    /** 最大項目數量 */
+    maxItems?: number;
+    /** 最小項目數量 */
+    minItems?: number;
+    /** 項目模板（當 itemType 為 object 時） */
+    itemTemplate?: BlockConfigOption[];
+    /** 是否允許排序 */
+    sortable?: boolean;
+    /** 新增項目文字 */
+    addItemText?: string;
+  };
+
+  /** 拖拽上傳區域特定配置 */
+  dragDropZone?: {
+    /** 允許的檔案類型 */
+    accept?: string;
+    /** 最大檔案大小（位元組） */
+    maxSize?: number;
+    /** 是否允許多檔案上傳 */
+    multiple?: boolean;
+    /** 上傳端點 */
+    uploadEndpoint?: string;
+    /** 拖拽區域提示文字 */
+    placeholder?: string;
+    /** 檔案預覽模式 */
+    previewMode?: "list" | "grid" | "none";
   };
 }
 

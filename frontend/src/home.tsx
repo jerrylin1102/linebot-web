@@ -30,6 +30,7 @@ const About = lazy(() => import("./pages/About"));
 const Language = lazy(() => import("./pages/Language"));
 const Suggest = lazy(() => import("./pages/Suggest"));
 const VisualBotEditorPage = lazy(() => import("./pages/VisualBotEditorPage"));
+const TestBlockMapping = lazy(() => import("./pages/TestBlockMapping"));
 
 // 優化的 QueryClient 配置
 const queryClient = new QueryClient({
@@ -111,6 +112,7 @@ const App = () => {
               <Route path="/about" element={<About />} />
               <Route path="/language" element={<Language />} />
               <Route path="/suggest" element={<Suggest />} />
+              <Route path="/test-block-mapping" element={<TestBlockMapping />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

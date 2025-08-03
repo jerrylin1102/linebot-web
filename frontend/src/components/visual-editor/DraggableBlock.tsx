@@ -5,6 +5,7 @@ import {
   getCategoryFromBlockType,
   getBlockCompatibility,
 } from "../../utils/blockCompatibility";
+import { blockRegistry } from "./blocks/registry";
 import { Badge } from "../ui/badge";
 import ErrorBoundary from "../ui/ErrorBoundary";
 import { useErrorHandler } from "../../hooks/useErrorHandler";
@@ -54,7 +55,20 @@ const DraggableBlock: React.FC<DraggableBlockProps> = ({
   React.useEffect(() => {
     const loadBlockInfo = async () => {
       try {
-        const blockCategory = getCategoryFromBlockType(blockType);
+        // 首先嘗試從註冊表獲取積木定義（新格式 ID）
+        const blockDefinition = blockRegistry.getBlock(blockType);
+        let blockCategory: BlockCategory;
+        
+        if (blockDefinition) {
+          // 如果找到積木定義，直接使用其類別
+          blockCategory = blockDefinition.category;
+          console.log("📦 從註冊表獲取積木類別:", { blockType, category: blockCategory });
+        } else {
+          // 回退到舊方法（用於向後相容）
+          blockCategory = getCategoryFromBlockType(blockType);
+          console.log("📦 使用舊方法獲取積木類別:", { blockType, category: blockCategory });
+        }
+        
         const blockCompatibility = getBlockCompatibility(blockCategory);
         
         setCategory(blockCategory);

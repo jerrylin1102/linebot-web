@@ -30,6 +30,22 @@ export const videoReply: BlockDefinition = {
       autoPlay: false,
       showControls: true,
       trackViews: false,
+      uploadMethod: "url", // url, file, drag-drop
+      fileUpload: {
+        enableDragDrop: true,
+        enableMultiple: false,
+        autoUpload: true,
+        enableVideoProcessing: false,
+        enableThumbnailGeneration: true,
+        enableCompression: false,
+        targetResolution: "720p", // 480p, 720p, 1080p, original
+      },
+      urlValidation: {
+        enableUrlCheck: true,
+        enableVideoMetaCheck: true,
+        enableFormatCheck: true,
+        enableThumbnailCheck: true,
+      },
     },
   },
   tags: ["回覆", "影片", "視頻", "多媒體"],
@@ -43,6 +59,19 @@ export const videoReply: BlockDefinition = {
   ],
   configOptions: [
     {
+      key: "uploadMethod",
+      label: "上傳方式",
+      type: "select",
+      defaultValue: "url",
+      options: [
+        { label: "URL 位址", value: "url" },
+        { label: "檔案上傳", value: "file" },
+        { label: "拖拽上傳", value: "drag-drop" },
+      ],
+      required: true,
+      description: "選擇影片檔案的提供方式",
+    },
+    {
       key: "videoUrl",
       label: "影片 URL",
       type: "text",
@@ -52,6 +81,48 @@ export const videoReply: BlockDefinition = {
       validation: {
         pattern: "^https://.*\\.(mp4|mov|avi)$",
         message: "必須是有效的 HTTPS 影片檔案 URL",
+      },
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["url"],
+      },
+    },
+    {
+      key: "fileUpload",
+      label: "檔案上傳",
+      type: "file-upload",
+      accept: "video/mp4,video/quicktime,video/x-msvideo",
+      maxSize: 209715200, // 200MB in bytes
+      description: "選擇要上傳的影片檔案",
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["file"],
+      },
+      uploadConfig: {
+        enablePreview: true,
+        enableThumbnailGeneration: true,
+        enableCompression: false,
+        targetResolution: "720p",
+        enableMetadata: true,
+      },
+    },
+    {
+      key: "dragDropUpload",
+      label: "拖拽上傳區域",
+      type: "drag-drop-zone",
+      accept: "video/mp4,video/quicktime,video/x-msvideo",
+      maxSize: 209715200, // 200MB in bytes
+      description: "將影片檔案拖拽到此區域進行上傳",
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["drag-drop"],
+      },
+      zoneConfig: {
+        enableMultiple: false,
+        autoUpload: true,
+        showProgress: true,
+        enablePreview: true,
+        enableThumbnailGeneration: true,
       },
     },
     {

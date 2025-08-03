@@ -38,6 +38,17 @@ export const flexReply: BlockDefinition = {
       enableQuickReply: false,
       enableNotification: true,
       templateSource: "custom", // custom, template, flexDesigner
+      flexDesignerEnabled: false,
+      designerIntegration: {
+        openInNewTab: true,
+        autoSync: false,
+        previewMode: "desktop", // desktop, mobile, both
+      },
+      templatePresets: {
+        lastUsedTemplate: "",
+        customTemplates: [],
+        favoriteTemplates: [],
+      },
     },
   },
   tags: ["回覆", "flex", "豐富訊息", "互動", "版面"],
@@ -75,9 +86,43 @@ export const flexReply: BlockDefinition = {
     {
       key: "templateId",
       label: "模板 ID",
-      type: "text",
+      type: "select",
       defaultValue: "",
+      options: [
+        { label: "無模板", value: "" },
+        { label: "基本文字卡片", value: "basic-text-card" },
+        { label: "圖文卡片", value: "image-text-card" },
+        { label: "按鈕選單", value: "button-menu" },
+        { label: "產品展示", value: "product-showcase" },
+        { label: "活動通知", value: "event-notification" },
+        { label: "優惠券", value: "coupon-card" },
+        { label: "聯絡資訊", value: "contact-info" },
+        { label: "時間表", value: "schedule-card" },
+      ],
       description: "當使用預設模板時的模板識別符",
+    },
+    {
+      key: "flexDesignerEnabled",
+      label: "啟用 Flex 設計器",
+      type: "boolean",
+      defaultValue: false,
+      description: "是否啟用視覺化 Flex 設計器進行設計",
+    },
+    {
+      key: "openFlexDesigner",
+      label: "開啟 Flex 設計器",
+      type: "button",
+      buttonText: "開啟設計器",
+      description: "點擊開啟視覺化 Flex Message 設計器",
+      action: "openFlexDesigner",
+    },
+    {
+      key: "loadTemplate",
+      label: "載入預設模板",
+      type: "button",
+      buttonText: "載入模板",
+      description: "根據選擇的模板 ID 載入預設的 Flex Message 結構",
+      action: "loadTemplate",
     },
     {
       key: "enableQuickReply",

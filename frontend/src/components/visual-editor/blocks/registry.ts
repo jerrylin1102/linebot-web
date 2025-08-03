@@ -12,6 +12,13 @@ import {
   BlockCategoryConfig,
 } from "./types";
 import { BlockCategory, WorkspaceContext } from "../../../types/block";
+import { 
+  mapBlockType, 
+  getOldBlockTypes, 
+  isValidBlockType,
+  getBlockTypeInfo,
+  normalizeBlockType
+} from "../utils/blockMapping";
 import {
   Zap,
   MessageSquare,
@@ -29,6 +36,7 @@ import {
 class BlockRegistry {
   private static instance: BlockRegistry;
   private blocks: Map<string, BlockRegistryItem> = new Map();
+  private aliases: Map<string, string> = new Map(); // 別名到主要ID的映射
   private loadState: BlockLoadState = {
     loading: false,
     loadedCount: 0,
@@ -61,18 +69,27 @@ class BlockRegistry {
       console.warn(`積木註冊警告 ${definition.id}:`, validation.warnings);
     }
 
+    // 標準化積木ID
+    const normalizedId = normalizeBlockType(definition.id);
     const registryItem: BlockRegistryItem = {
-      definition,
+      definition: {
+        ...definition,
+        id: normalizedId, // 使用標準化後的ID
+      },
       registeredAt: new Date(),
       enabled: true,
     };
 
-    this.blocks.set(definition.id, registryItem);
+    this.blocks.set(normalizedId, registryItem);
+    
+    // 註冊別名映射
+    this.registerAliases(normalizedId);
+    
     this.updateLoadState();
     this.notifyListeners();
 
     console.log(
-      `✅ 積木註冊成功: ${definition.id} (${definition.displayName})`
+      `✅ 積木註冊成功: ${normalizedId} (${definition.displayName})`
     );
   }
 
@@ -112,10 +129,37 @@ class BlockRegistry {
   }
 
   /**
-   * 獲取積木定義
+   * 獲取積木定義（支援別名查詢）
    */
   getBlock(blockId: string): BlockDefinition | undefined {
-    return this.blocks.get(blockId)?.definition;
+    // 首先嘗試直接查詢
+    let definition = this.blocks.get(blockId)?.definition;
+    if (definition) {
+      return definition;
+    }
+
+    // 嘗試通過別名查詢
+    const mappedId = this.resolveAlias(blockId);
+    if (mappedId && mappedId !== blockId) {
+      definition = this.blocks.get(mappedId)?.definition;
+      if (definition) {
+        console.log(`🔄 通過別名 "${blockId}" 找到積木: ${mappedId}`);
+        return definition;
+      }
+    }
+
+    // 嘗試標準化後查詢
+    const normalizedId = normalizeBlockType(blockId);
+    if (normalizedId !== blockId) {
+      definition = this.blocks.get(normalizedId)?.definition;
+      if (definition) {
+        console.log(`🔄 通過標準化 "${blockId}" → "${normalizedId}" 找到積木`);
+        return definition;
+      }
+    }
+
+    console.warn(`⚠️ 未找到積木: ${blockId}`);
+    return undefined;
   }
 
   /**
@@ -370,16 +414,133 @@ class BlockRegistry {
    * 啟用/停用積木
    */
   setBlockEnabled(blockId: string, enabled: boolean): boolean {
-    const registryItem = this.blocks.get(blockId);
+    const resolvedId = this.resolveAlias(blockId);
+    const registryItem = this.blocks.get(resolvedId);
     if (registryItem) {
       registryItem.enabled = enabled;
       this.notifyListeners();
       console.log(
-        `${enabled ? "✅" : "❌"} 積木 ${blockId} ${enabled ? "已啟用" : "已停用"}`
+        `${enabled ? "✅" : "❌"} 積木 ${resolvedId} ${enabled ? "已啟用" : "已停用"}`
       );
       return true;
     }
     return false;
+  }
+
+  /**
+   * 註冊別名映射
+   */
+  private registerAliases(primaryId: string): void {
+    const blockInfo = getBlockTypeInfo(primaryId);
+    if (blockInfo) {
+      // 註冊主要ID到自己的映射
+      this.aliases.set(primaryId, primaryId);
+      
+      // 註冊所有別名到主要ID的映射
+      blockInfo.aliases.forEach(alias => {
+        this.aliases.set(alias, primaryId);
+        console.log(`🔗 註冊別名映射: ${alias} → ${primaryId}`);
+      });
+
+      // 註冊舊格式ID的映射
+      const oldTypes = getOldBlockTypes(primaryId);
+      oldTypes.forEach(oldType => {
+        if (oldType !== primaryId) {
+          this.aliases.set(oldType, primaryId);
+          console.log(`🔗 註冊舊格式映射: ${oldType} → ${primaryId}`);
+        }
+      });
+    }
+  }
+
+  /**
+   * 解析別名到主要ID
+   */
+  private resolveAlias(blockId: string): string {
+    // 首先查看本地別名映射
+    const localMapped = this.aliases.get(blockId);
+    if (localMapped) {
+      return localMapped;
+    }
+
+    // 使用映射系統進行標準化
+    const normalized = normalizeBlockType(blockId);
+    if (normalized !== blockId) {
+      // 如果標準化後的ID存在於註冊表中，使用它
+      if (this.blocks.has(normalized)) {
+        return normalized;
+      }
+    }
+
+    return blockId;
+  }
+
+  /**
+   * 獲取積木的所有別名
+   */
+  getBlockAliases(blockId: string): string[] {
+    const resolvedId = this.resolveAlias(blockId);
+    const aliases: string[] = [];
+    
+    // 查找所有映射到此主要ID的別名
+    this.aliases.forEach((primaryId, alias) => {
+      if (primaryId === resolvedId) {
+        aliases.push(alias);
+      }
+    });
+
+    return aliases;
+  }
+
+  /**
+   * 檢查積木ID是否存在（包含別名）
+   */
+  hasBlock(blockId: string): boolean {
+    const resolvedId = this.resolveAlias(blockId);
+    return this.blocks.has(resolvedId);
+  }
+
+  /**
+   * 檢查積木類型是否有效
+   */
+  isValidBlockType(blockType: string): boolean {
+    return isValidBlockType(blockType) || this.aliases.has(blockType);
+  }
+
+  /**
+   * 獲取別名映射統計
+   */
+  getAliasStatistics() {
+    const totalAliases = this.aliases.size;
+    const uniquePrimaryIds = new Set(this.aliases.values()).size;
+    
+    return {
+      totalAliases,
+      uniquePrimaryIds,
+      averageAliasesPerBlock: totalAliases / uniquePrimaryIds,
+      aliasMapping: Object.fromEntries(this.aliases.entries()),
+    };
+  }
+
+  /**
+   * 搜尋積木（支援別名搜尋）
+   */
+  searchBlocksWithAliases(query: string): BlockRegistryItem[] {
+    const results = this.searchBlocks(query);
+    const queryLower = query.toLowerCase();
+    
+    // 額外搜尋別名
+    const aliasMatches: BlockRegistryItem[] = [];
+    this.aliases.forEach((primaryId, alias) => {
+      if (alias.toLowerCase().includes(queryLower)) {
+        const block = this.blocks.get(primaryId);
+        if (block && !results.includes(block)) {
+          aliasMatches.push(block);
+        }
+      }
+    });
+
+    return [...results, ...aliasMatches];
   }
 }
 

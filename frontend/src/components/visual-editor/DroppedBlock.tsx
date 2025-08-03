@@ -13,6 +13,9 @@ import {
 import { X, Settings, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import DataCacheService from "../../services/DataCacheService";
 import { FlexMessageSummary } from "../../services/visualEditorApi";
+import { blockRegistry } from "./blocks/registry";
+import { BlockDefinition } from "./blocks/types";
+import BlockConfigRenderer from "./BlockConfigRenderer";
 
 interface BlockData {
   [key: string]: unknown;
@@ -69,6 +72,228 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   const [loadingFlexMessages, setLoadingFlexMessages] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  /**
+   * 獲取積木ID映射 - 處理舊格式到新格式的轉換
+   */
+  const getBlockId = (): string => {
+    const { blockType, blockData } = block;
+    
+    // 如果已經是新格式的ID，直接返回
+    if (blockRegistry.getBlock(blockType)) {
+      return blockType;
+    }
+    
+    // 處理舊格式映射到新格式
+    try {
+      // 回覆積木映射
+      if (blockType === "reply" && blockData.replyType) {
+        const replyTypeMap: Record<string, string> = {
+          "text": "text-reply",
+          "image": "image-reply", 
+          "flex": "flex-reply",
+          "sticker": "sticker-reply",
+          "audio": "audio-reply",
+          "video": "video-reply", 
+          "location": "location-reply",
+          "template": "template-reply",
+          "quick": "quick-reply",
+        };
+        const mappedId = replyTypeMap[blockData.replyType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射回覆積木: ${blockType}+${blockData.replyType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      // 事件積木映射
+      if (blockType === "event" && blockData.eventType) {
+        const eventTypeMap: Record<string, string> = {
+          "message.text": "text-message-event",
+          "message.image": "image-message-event",
+          "message.audio": "audio-message-event",
+          "message.video": "video-message-event",
+          "message.file": "file-message-event",
+          "message.location": "location-message-event",
+          "message.sticker": "sticker-message-event",
+          "follow": "follow-event",
+          "unfollow": "unfollow-event",
+          "join": "join-event",
+          "leave": "leave-event",
+          "memberJoined": "member-joined-event",
+          "memberLeft": "member-left-event",
+          "postback": "postback-event",
+          "beacon": "beacon-event",
+        };
+        const mappedId = eventTypeMap[blockData.eventType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射事件積木: ${blockType}+${blockData.eventType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      // 控制積木映射
+      if (blockType === "control" && blockData.controlType) {
+        const controlTypeMap: Record<string, string> = {
+          "if-then": "if-then-control",
+          "if-then-else": "if-then-else-control",
+          "switch": "switch-control",
+          "loop": "loop-control",
+          "break": "break-control",
+          "continue": "continue-control",
+        };
+        const mappedId = controlTypeMap[blockData.controlType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射控制積木: ${blockType}+${blockData.controlType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      // 設定積木映射
+      if (blockType === "setting" && blockData.settingType) {
+        const settingTypeMap: Record<string, string> = {
+          "variable": "variable-setting",
+          "function": "function-setting",
+          "api": "api-setting",
+          "database": "database-setting",
+        };
+        const mappedId = settingTypeMap[blockData.settingType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射設定積木: ${blockType}+${blockData.settingType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      // Flex Message 積木映射
+      if (blockType === "flex-container" && blockData.containerType) {
+        const containerTypeMap: Record<string, string> = {
+          "bubble": "flex-bubble",
+          "carousel": "flex-carousel", 
+          "box": "flex-box",
+        };
+        const mappedId = containerTypeMap[blockData.containerType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射容器積木: ${blockType}+${blockData.containerType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      if (blockType === "flex-content" && blockData.contentType) {
+        const contentTypeMap: Record<string, string> = {
+          "text": "flex-text",
+          "image": "flex-image",
+          "button": "flex-button",
+          "filler": "flex-filler",
+          "icon": "flex-icon",
+          "separator": "flex-separator",
+        };
+        const mappedId = contentTypeMap[blockData.contentType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射內容積木: ${blockType}+${blockData.contentType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      if (blockType === "flex-layout" && blockData.layoutType) {
+        const layoutTypeMap: Record<string, string> = {
+          "spacer": "flex-spacer",
+          "separator": "flex-separator",
+        };
+        const mappedId = layoutTypeMap[blockData.layoutType as string];
+        if (mappedId) {
+          console.log(`[DroppedBlock] 映射佈局積木: ${blockType}+${blockData.layoutType} → ${mappedId}`);
+          return mappedId;
+        }
+      }
+      
+      // 如果沒有找到映射，嘗試一些通用映射模式
+      if (blockData.replyType) {
+        const genericReplyId = `${blockData.replyType}-reply`;
+        if (blockRegistry.getBlock(genericReplyId)) {
+          console.log(`[DroppedBlock] 通用回覆映射: ${blockType} → ${genericReplyId}`);
+          return genericReplyId;
+        }
+      }
+      
+      if (blockData.eventType) {
+        const genericEventId = `${blockData.eventType.replace('.', '-')}-event`;
+        if (blockRegistry.getBlock(genericEventId)) {
+          console.log(`[DroppedBlock] 通用事件映射: ${blockType} → ${genericEventId}`);
+          return genericEventId;
+        }
+      }
+      
+    } catch (error) {
+      console.error("[DroppedBlock] 積木ID映射過程中發生錯誤:", error);
+    }
+    
+    // 如果都沒有找到，返回原始ID並記錄警告
+    console.warn(`[DroppedBlock] 無法映射積木ID: ${blockType}，可能需要更新映射規則`, blockData);
+    return blockType;
+  };
+
+  // 從註冊表獲取積木定義（使用映射後的ID）
+  const mappedBlockId = getBlockId();
+  const blockDefinition: BlockDefinition | undefined = blockRegistry.getBlock(mappedBlockId);
+  
+  // 判斷是否使用新的配置系統
+  const useNewConfigSystem = blockDefinition && blockDefinition.configOptions && blockDefinition.configOptions.length > 0;
+  
+  // 增強的調試日誌和錯誤處理
+  useEffect(() => {
+    const logBlockInfo = () => {
+      console.group(`[DroppedBlock] 積木資訊 - Index: ${index}`);
+      console.log("原始積木類型:", block.blockType);
+      console.log("映射後積木ID:", mappedBlockId);
+      console.log("積木數據:", block.blockData);
+      console.log("找到積木定義:", !!blockDefinition);
+      console.log("使用新配置系統:", useNewConfigSystem);
+      
+      if (blockDefinition) {
+        console.log("積木定義詳情:", {
+          id: blockDefinition.id,
+          displayName: blockDefinition.displayName,
+          configOptionsCount: blockDefinition.configOptions?.length || 0,
+          category: blockDefinition.category,
+        });
+      } else {
+        console.warn("⚠️ 找不到積木定義，可能的原因:");
+        console.warn("1. 積木尚未註冊到註冊表");
+        console.warn("2. 映射規則不正確");
+        console.warn("3. 積木初始化未完成");
+        
+        // 提供診斷資訊
+        const registryStats = blockRegistry.getStatistics();
+        console.log("註冊表統計:", registryStats);
+        
+        // 嘗試列出相似的積木ID
+        const allBlocks = blockRegistry.getAllBlocks();
+        const similarBlocks = allBlocks.filter(item => 
+          item.definition.id.includes(block.blockType) || 
+          item.definition.blockType === block.blockType
+        );
+        
+        if (similarBlocks.length > 0) {
+          console.log("找到相似的積木:", similarBlocks.map(item => ({
+            id: item.definition.id,
+            blockType: item.definition.blockType,
+            displayName: item.definition.displayName,
+          })));
+        }
+      }
+      console.groupEnd();
+    };
+    
+    // 在開發環境下輸出詳細日誌
+    if (process.env.NODE_ENV === 'development') {
+      logBlockInfo();
+    }
+    
+    // 如果找不到積木定義，發出警告
+    if (!blockDefinition) {
+      console.error(`[DroppedBlock] 找不到積木定義: ${mappedBlockId}，原始類型: ${block.blockType}`);
+    }
+  }, [block.blockType, mappedBlockId, blockDefinition, useNewConfigSystem, index, block.blockData]);
+
   // 載入FLEX訊息列表（使用快取服務）
   useEffect(() => {
     const loadFlexMessages = async () => {
@@ -100,6 +325,47 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
         flexMessageName: selectedMessage.name,
       });
     }
+  };
+
+  /**
+   * 處理新配置系統的數據變更
+   */
+  const handleConfigDataChange = (key: string, value: unknown) => {
+    setBlockData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  /**
+   * 獲取積木顯示名稱
+   */
+  const getBlockDisplayName = (): string => {
+    if (blockDefinition) {
+      return blockDefinition.displayName;
+    }
+    return block.blockData.title || block.blockType;
+  };
+
+  /**
+   * 獲取積木顏色（優先使用註冊表定義）
+   */
+  const getBlockColor = (): string => {
+    if (blockDefinition) {
+      return blockDefinition.color;
+    }
+    
+    // 向後相容的顏色映射
+    const colorMap: Record<string, string> = {
+      event: "bg-orange-500",
+      reply: "bg-green-500",
+      control: "bg-purple-500",
+      setting: "bg-gray-500",
+      "flex-container": "bg-indigo-500",
+      "flex-content": "bg-blue-500",
+      "flex-layout": "bg-teal-500",
+    };
+    return colorMap[block.blockType] || "bg-blue-500";
   };
 
   // 拖拽功能 - 支持重排
@@ -211,20 +477,93 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   // 組合 drag 和 drop refs
   drag(drop(ref));
 
-  const getBlockColor = (_blockType: string): string => {
-    const colorMap: Record<string, string> = {
-      event: "bg-orange-500",
-      reply: "bg-green-500",
-      control: "bg-purple-500",
-      setting: "bg-gray-500",
-      "flex-container": "bg-indigo-500",
-      "flex-content": "bg-blue-500",
-      "flex-layout": "bg-teal-500",
-    };
-    return colorMap[block.blockType] || "bg-blue-500";
-  };
 
   const renderBlockContent = () => {
+    // 如果使用新的配置系統，優先使用配置渲染器
+    if (useNewConfigSystem && isEditing) {
+      try {
+        if (!blockDefinition || !blockDefinition.configOptions) {
+          console.error("[DroppedBlock] 新配置系統缺少必要的配置選項");
+          return (
+            <div>
+              <div className="font-medium text-red-200">⚠️ 配置錯誤</div>
+              <div className="text-xs text-red-300 mt-1">
+                積木定義缺少配置選項，請檢查積木註冊
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div>
+            <div className="font-medium">{getBlockDisplayName()}</div>
+            <div className="mt-3">
+              <BlockConfigRenderer
+                configOptions={blockDefinition.configOptions}
+                blockData={blockData}
+                onDataChange={handleConfigDataChange}
+                className="space-y-3"
+              />
+            </div>
+          </div>
+        );
+      } catch (error) {
+        console.error("[DroppedBlock] 新配置系統渲染錯誤:", error);
+        return (
+          <div>
+            <div className="font-medium text-red-200">⚠️ 渲染錯誤</div>
+            <div className="text-xs text-red-300 mt-1">
+              配置渲染器出現錯誤: {error instanceof Error ? error.message : String(error)}
+            </div>
+          </div>
+        );
+      }
+    }
+
+    // 非編輯模式或舊系統，顯示積木標題
+    if (!isEditing) {
+      return (
+        <div>
+          <div className="font-medium">{getBlockDisplayName()}</div>
+          
+          {/* 如果找不到積木定義，顯示警告 */}
+          {!blockDefinition && (
+            <div className="text-xs text-yellow-300 mt-1">
+              ⚠️ 找不到積木定義 (ID: {mappedBlockId})
+            </div>
+          )}
+          
+          {/* 顯示一些關鍵配置資訊 */}
+          {blockDefinition?.configOptions && blockDefinition.configOptions.length > 0 && (
+            <div className="text-xs text-white/60 mt-1">
+              {blockDefinition.configOptions
+                .filter(option => {
+                  const value = blockData[option.key];
+                  return value !== undefined && value !== null && value !== '';
+                })
+                .slice(0, 2) // 只顯示前2個配置
+                .map(option => {
+                  const value = blockData[option.key];
+                  const displayValue = typeof value === 'string' && value.length > 20 
+                    ? value.substring(0, 20) + '...' 
+                    : String(value);
+                  return `${option.label}: ${displayValue}`;
+                })
+                .join(', ')}
+            </div>
+          )}
+          
+          {/* 如果是新系統但沒有配置選項，顯示提示 */}
+          {blockDefinition && (!blockDefinition.configOptions || blockDefinition.configOptions.length === 0) && (
+            <div className="text-xs text-white/40 mt-1">
+              (此積木暫無可配置選項)
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 向後相容的舊系統渲染邏輯
     switch (block.blockType) {
       case "event":
         return (
@@ -485,7 +824,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
       <div
         ref={ref}
         onMouseLeave={handleMouseLeave}
-        className={`${getBlockColor(block.blockType)} text-white p-3 rounded-lg shadow-sm transition-all duration-200 ${
+        className={`${getBlockColor()} text-white p-3 rounded-lg shadow-sm transition-all duration-200 ${
           isDragging ? "opacity-50 scale-95 rotate-2" : "opacity-100 scale-100"
         } ${isOver ? "ring-2 ring-blue-300 ring-opacity-50" : ""}`}
       >

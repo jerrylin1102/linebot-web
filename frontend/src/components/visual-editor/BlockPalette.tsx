@@ -181,7 +181,7 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
     return (
       <DraggableBlock
         key={definition.id}
-        blockType={definition.blockType}
+        blockType={definition.id}
         blockData={definition.defaultData}
         color={definition.color}
       >

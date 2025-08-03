@@ -28,6 +28,20 @@ export const audioReply: BlockDefinition = {
       allowedFormats: ["m4a", "mp3", "wav"],
       autoPlay: false,
       showDuration: true,
+      uploadMethod: "url", // url, file, drag-drop
+      fileUpload: {
+        enableDragDrop: true,
+        enableMultiple: false,
+        autoUpload: true,
+        enableAudioProcessing: false,
+        volumeNormalization: false,
+        enableTrimming: false,
+      },
+      urlValidation: {
+        enableUrlCheck: true,
+        enableAudioMetaCheck: true,
+        enableFormatCheck: true,
+      },
     },
   },
   tags: ["回覆", "音頻", "語音", "多媒體"],
@@ -41,6 +55,19 @@ export const audioReply: BlockDefinition = {
   ],
   configOptions: [
     {
+      key: "uploadMethod",
+      label: "上傳方式",
+      type: "select",
+      defaultValue: "url",
+      options: [
+        { label: "URL 位址", value: "url" },
+        { label: "檔案上傳", value: "file" },
+        { label: "拖拽上傳", value: "drag-drop" },
+      ],
+      required: true,
+      description: "選擇音頻檔案的提供方式",
+    },
+    {
       key: "audioUrl",
       label: "音頻 URL",
       type: "text",
@@ -50,6 +77,46 @@ export const audioReply: BlockDefinition = {
       validation: {
         pattern: "^https://.*\\.(m4a|mp3|wav)$",
         message: "必須是有效的 HTTPS 音頻檔案 URL",
+      },
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["url"],
+      },
+    },
+    {
+      key: "fileUpload",
+      label: "檔案上傳",
+      type: "file-upload",
+      accept: "audio/mp4,audio/mpeg,audio/wav",
+      maxSize: 104857600, // 100MB in bytes
+      description: "選擇要上傳的音頻檔案",
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["file"],
+      },
+      uploadConfig: {
+        enablePreview: true,
+        enableTrimming: false,
+        volumeNormalization: false,
+        enableMetadata: true,
+      },
+    },
+    {
+      key: "dragDropUpload",
+      label: "拖拽上傳區域",
+      type: "drag-drop-zone",
+      accept: "audio/mp4,audio/mpeg,audio/wav",
+      maxSize: 104857600, // 100MB in bytes
+      description: "將音頻檔案拖拽到此區域進行上傳",
+      conditional: {
+        dependsOn: "uploadMethod",
+        showWhen: ["drag-drop"],
+      },
+      zoneConfig: {
+        enableMultiple: false,
+        autoUpload: true,
+        showProgress: true,
+        enablePreview: true,
       },
     },
     {
