@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const richMenuSwitchAction: BlockDefinition = {
   id: "richmenu-switch-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "切換選單",
   description: "點擊後切換豐富選單",
   icon: Menu,

@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const clipboardAction: BlockDefinition = {
   id: "clipboard-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "複製文字",
   description: "點擊後複製指定文字到剪貼板",
   icon: Copy,

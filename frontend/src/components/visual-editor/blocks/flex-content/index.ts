@@ -6,7 +6,6 @@
 export { textContent } from "./TextContent";
 export { imageContent } from "./ImageContent";
 export { buttonContent } from "./ButtonContent";
-export { separatorContent } from "./SeparatorContent";
 export { videoContent } from "./VideoContent";
 export { iconContent } from "./IconContent";
 export { spanContent } from "./SpanContent";

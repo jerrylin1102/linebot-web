@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const locationAction: BlockDefinition = {
   id: "location-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "分享位置",
   description: "點擊後分享當前位置",
   icon: MapPin,

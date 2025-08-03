@@ -346,9 +346,9 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
           {/* 全部積木標籤 */}
           <TabsContent value="all" className="flex-1 overflow-hidden">
             <div
-              className="h-full p-4 space-y-4 overflow-y-scroll custom-scrollbar"
+              className="h-full px-4 pt-4 pb-6 space-y-4 overflow-y-scroll custom-scrollbar"
               style={{
-                maxHeight: "calc(100vh - 200px)",
+                maxHeight: "calc(100vh - 240px)",
                 scrollbarWidth: "thin",
                 scrollbarColor: "#cbd5e0 #f7fafc",
               }}
@@ -362,9 +362,9 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
           {/* 邏輯積木標籤 */}
           <TabsContent value="logic" className="flex-1 overflow-hidden">
             <div
-              className="h-full p-4 space-y-4 overflow-y-scroll custom-scrollbar"
+              className="h-full px-4 pt-4 pb-6 space-y-4 overflow-y-scroll custom-scrollbar"
               style={{
-                maxHeight: "calc(100vh - 200px)",
+                maxHeight: "calc(100vh - 240px)",
                 scrollbarWidth: "thin",
                 scrollbarColor: "#cbd5e0 #f7fafc",
               }}
@@ -378,9 +378,9 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({
           {/* Flex 組件標籤 */}
           <TabsContent value="flex" className="flex-1 overflow-hidden">
             <div
-              className="h-full p-4 space-y-4 overflow-y-scroll custom-scrollbar"
+              className="h-full px-4 pt-4 pb-6 space-y-4 overflow-y-scroll custom-scrollbar"
               style={{
-                maxHeight: "calc(100vh - 200px)",
+                maxHeight: "calc(100vh - 240px)",
                 scrollbarWidth: "thin",
                 scrollbarColor: "#cbd5e0 #f7fafc",
               }}

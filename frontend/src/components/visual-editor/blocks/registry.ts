@@ -20,6 +20,7 @@ import {
   Square,
   Type,
   MousePointer,
+  Hand,
 } from "lucide-react";
 
 /**
@@ -441,6 +442,14 @@ export const BLOCK_CATEGORY_CONFIGS: BlockCategoryConfig[] = [
     description: "Flex Message 佈局和排版積木",
     order: 7,
     showInContext: [WorkspaceContext.FLEX, WorkspaceContext.LOGIC],
+  },
+  {
+    category: BlockCategory.ACTION,
+    displayName: "互動動作",
+    icon: Hand,
+    description: "LINE Bot 互動動作積木",
+    order: 8,
+    showInContext: [WorkspaceContext.LOGIC, WorkspaceContext.FLEX],
   },
 ];
 

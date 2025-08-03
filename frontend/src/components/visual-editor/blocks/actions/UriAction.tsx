@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const uriAction: BlockDefinition = {
   id: "uri-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "開啟連結",
   description: "點擊後開啟指定的網頁連結",
   icon: ExternalLink,

@@ -9,8 +9,8 @@ import { BlockCategory, WorkspaceContext } from "../../../../types/block";
 
 export const separatorContent: BlockDefinition = {
   id: "separator-content",
-  blockType: "flex-content",
-  category: BlockCategory.FLEX_CONTENT,
+  blockType: "flex-layout",
+  category: BlockCategory.FLEX_LAYOUT,
   displayName: "分隔線",
   description: "Flex Message 中的分隔線元件",
   icon: Minus,

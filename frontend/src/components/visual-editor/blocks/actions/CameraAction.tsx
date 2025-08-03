@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const cameraAction: BlockDefinition = {
   id: "camera-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "開啟相機",
   description: "點擊後開啟相機拍照",
   icon: Camera,

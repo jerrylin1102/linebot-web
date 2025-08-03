@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const cameraRollAction: BlockDefinition = {
   id: "camera-roll-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "選擇照片",
   description: "點擊後開啟相機膠卷選擇照片",
   icon: Image,

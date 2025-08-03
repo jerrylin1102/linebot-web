@@ -12,6 +12,7 @@ export enum BlockCategory {
   FLEX_CONTAINER = "flex-container", // Flex 容器積木
   FLEX_CONTENT = "flex-content", // Flex 內容積木
   FLEX_LAYOUT = "flex-layout", // Flex 佈局積木
+  ACTION = "action", // 互動動作積木
 }
 
 // 積木相容性上下文
@@ -98,6 +99,15 @@ export const BLOCK_COMPATIBILITY_RULES: CompatibilityRule[] = [
     allowedIn: [WorkspaceContext.FLEX, WorkspaceContext.LOGIC],
     restrictions: {
       requiresParent: [BlockCategory.FLEX_CONTAINER],
+    },
+  },
+
+  // 互動動作積木：兩個上下文都可以使用，通常需要附加到內容元件上
+  {
+    category: BlockCategory.ACTION,
+    allowedIn: [WorkspaceContext.LOGIC, WorkspaceContext.FLEX],
+    restrictions: {
+      requiresParent: [BlockCategory.FLEX_CONTENT, BlockCategory.REPLY],
     },
   },
 ];
@@ -369,5 +379,39 @@ export const BLOCK_MIGRATION_RULES: BlockMigrationRule[] = [
   {
     oldBlockType: "flex_filler",
     newCategory: BlockCategory.FLEX_LAYOUT,
+  },
+
+  // 互動動作積木遷移
+  {
+    oldBlockType: "action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "uri_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "camera_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "camera_roll_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "location_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "datetime_picker_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "richmenu_switch_action",
+    newCategory: BlockCategory.ACTION,
+  },
+  {
+    oldBlockType: "clipboard_action",
+    newCategory: BlockCategory.ACTION,
   },
 ];

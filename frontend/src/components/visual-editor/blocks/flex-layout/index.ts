@@ -6,3 +6,4 @@
 export { spacerLayout } from "./SpacerLayout";
 export { fillerLayout } from "./FillerLayout";
 export { alignLayout } from "./AlignLayout";
+export { separatorContent } from "./SeparatorContent";

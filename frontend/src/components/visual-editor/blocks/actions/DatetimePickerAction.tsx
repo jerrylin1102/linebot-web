@@ -11,7 +11,7 @@ import { ActionType } from "../../../../types/lineActions";
 export const datetimePickerAction: BlockDefinition = {
   id: "datetime-picker-action",
   blockType: "action",
-  category: BlockCategory.FLEX_CONTENT,
+  category: BlockCategory.ACTION,
   displayName: "選擇日期時間",
   description: "點擊後開啟日期時間選擇器",
   icon: Calendar,
