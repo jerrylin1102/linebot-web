@@ -71,6 +71,27 @@ export const VisualBotEditor: React.FC = () => {
     }
   }, [saveStatus]);
 
+  // 處理用戶編輯操作的積木變更（由 Workspace 主動調用）
+  const handleLogicBlocksUserChange = useCallback((
+    blocks: (UnifiedBlock | LegacyBlock)[] | ((prev: (UnifiedBlock | LegacyBlock)[]) => (UnifiedBlock | LegacyBlock)[])
+  ) => {
+    setLogicBlocks(blocks);
+    // 只有在有選擇的模板時才標記為變更（避免初始狀態誤觸發）
+    if (selectedLogicTemplateId) {
+      markAsChanged();
+    }
+  }, [selectedLogicTemplateId, markAsChanged]);
+
+  const handleFlexBlocksUserChange = useCallback((
+    blocks: (UnifiedBlock | LegacyBlock)[] | ((prev: (UnifiedBlock | LegacyBlock)[]) => (UnifiedBlock | LegacyBlock)[])
+  ) => {
+    setFlexBlocks(blocks);
+    // 只有在有選擇的 FlexMessage 時才標記為變更（避免初始狀態誤觸發）
+    if (selectedFlexMessageId) {
+      markAsChanged();
+    }
+  }, [selectedFlexMessageId, markAsChanged]);
+
   // 處理返回上一頁
   const handleGoBack = () => {
     // 如果有未儲存的變更，先嘗試儲存
@@ -395,19 +416,8 @@ export const VisualBotEditor: React.FC = () => {
     setLastSavedTime(undefined);
   };
 
-  // 監聽積木變更的 useEffect（僅標記為未儲存）
-  useEffect(() => {
-    // 初次載入時不觸發變更檢測
-    if (isInitialLoadRef.current) {
-      isInitialLoadRef.current = false;
-      return;
-    }
-
-    // 如果不是正在載入數據且有積木，才標記為變更
-    if (!isLoadingData && (logicBlocks.length > 0 || flexBlocks.length > 0)) {
-      markAsChanged();
-    }
-  }, [logicBlocks, flexBlocks, isLoadingData, markAsChanged]);
+  // 移除自動變更檢測，改由 Workspace 組件主動通知變更
+  // 這樣可以避免載入數據時誤觸發變更狀態
 
   // 初始化組件和除錯模式檢測
   useEffect(() => {
@@ -494,8 +504,8 @@ export const VisualBotEditor: React.FC = () => {
           <Workspace
             logicBlocks={logicBlocks}
             flexBlocks={flexBlocks}
-            onLogicBlocksChange={setLogicBlocks}
-            onFlexBlocksChange={setFlexBlocks}
+            onLogicBlocksChange={handleLogicBlocksUserChange}
+            onFlexBlocksChange={handleFlexBlocksUserChange}
             currentLogicTemplateName={currentLogicTemplateName}
             currentFlexMessageName={currentFlexMessageName}
             selectedBotId={selectedBotId}
