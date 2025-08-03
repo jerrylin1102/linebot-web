@@ -10,6 +10,8 @@ import { Button } from "../ui/button";
 import { UnifiedBlock } from "../../types/block";
 import { migrateBlocks } from "../../utils/blockCompatibility";
 import VisualEditorApi from "../../services/visualEditorApi";
+import DataCacheService from "../../services/DataCacheService";
+import CacheDebugPanel from "../debug/CacheDebugPanel";
 
 // 向後相容的舊格式介面
 interface LegacyBlockData {
@@ -31,6 +33,8 @@ interface ProjectData {
 
 export const VisualBotEditor: React.FC = () => {
   const navigate = useNavigate();
+  const dataCache = DataCacheService.getInstance();
+  
   const [logicBlocks, setLogicBlocks] = useState<
     (UnifiedBlock | LegacyBlock)[]
   >([]);
@@ -48,6 +52,9 @@ export const VisualBotEditor: React.FC = () => {
     useState<string>("");
   const [currentFlexMessageName, setCurrentFlexMessageName] =
     useState<string>("");
+  
+  // 除錯面板狀態（僅開發環境）
+  const [showCacheDebug, setShowCacheDebug] = useState(false);
 
   // 延遲儲存相關狀態
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
@@ -116,14 +123,15 @@ export const VisualBotEditor: React.FC = () => {
     }
   };
 
-  // 處理邏輯模板選擇變更
+  // 處理邏輯模板選擇變更（使用快取服務）
   const handleLogicTemplateSelect = async (templateId: string) => {
     setSelectedLogicTemplateId(templateId);
 
     if (templateId) {
       setIsLoadingData(true);
       try {
-        const template = await VisualEditorApi.getLogicTemplate(templateId);
+        // 使用快取服務載入邏輯模板
+        const template = await dataCache.getLogicTemplate(templateId);
         setLogicBlocks(template.logic_blocks || []);
         setCurrentLogicTemplateName(template.name);
 
@@ -133,7 +141,7 @@ export const VisualBotEditor: React.FC = () => {
         setSaveError("");
         setLastSavedTime(new Date(template.updated_at));
 
-        console.log(`已載入邏輯模板 ${template.name} 的數據`);
+        console.log(`[VisualBotEditor] 已載入邏輯模板 ${template.name} 的數據`);
       } catch (error) {
         console.error("Error occurred:", error);
         setLogicBlocks([]);
@@ -152,14 +160,15 @@ export const VisualBotEditor: React.FC = () => {
     }
   };
 
-  // 處理 FlexMessage 選擇變更
+  // 處理 FlexMessage 選擇變更（使用快取服務）
   const handleFlexMessageSelect = async (messageId: string) => {
     setSelectedFlexMessageId(messageId);
 
     if (messageId) {
       setIsLoadingData(true);
       try {
-        const messages = await VisualEditorApi.getUserFlexMessages();
+        // 使用快取服務載入 FlexMessage 列表
+        const messages = await dataCache.getUserFlexMessages();
         const message = messages.find((m) => m.id === messageId);
         if (message && message.content && message.content.blocks) {
           setFlexBlocks(message.content.blocks || []);
@@ -171,7 +180,7 @@ export const VisualBotEditor: React.FC = () => {
           setSaveError("");
           setLastSavedTime(new Date(message.updated_at));
 
-          console.log(`已載入 FlexMessage ${message.name} 的數據`);
+          console.log(`[VisualBotEditor] 已載入 FlexMessage ${message.name} 的數據`);
         } else {
           setFlexBlocks([]);
           setCurrentFlexMessageName(message?.name || "");
@@ -196,43 +205,40 @@ export const VisualBotEditor: React.FC = () => {
     }
   };
 
-  // 創建新邏輯模板
+  // 創建新邏輯模板（使用快取服務）
   const handleLogicTemplateCreate = async (name: string) => {
     if (!selectedBotId) {
       throw new Error("請先選擇一個 Bot");
     }
 
     try {
-      const template = await VisualEditorApi.createLogicTemplate(
-        selectedBotId,
-        {
-          name,
-          description: `由視覺化編輯器創建的邏輯模板`,
-          logic_blocks: [],
-          is_active: "false",
-        }
-      );
+      const template = await dataCache.createLogicTemplate(selectedBotId, {
+        name,
+        description: `由視覺化編輯器創建的邏輯模板`,
+        logic_blocks: [],
+        is_active: "false",
+      });
 
       // 自動選擇新創建的邏輯模板
       await handleLogicTemplateSelect(template.id);
-      console.log("邏輯模板創建成功:", template);
+      console.log("[VisualBotEditor] 邏輯模板創建成功:", template);
     } catch (_error) {
       console.error("Error occurred:", _error);
       throw error;
     }
   };
 
-  // 創建新 FlexMessage
+  // 創建新 FlexMessage（使用快取服務）
   const handleFlexMessageCreate = async (name: string) => {
     try {
-      const message = await VisualEditorApi.createFlexMessage({
+      const message = await dataCache.createFlexMessage({
         name,
         content: { blocks: [] },
       });
 
       // 自動選擇新創建的 FlexMessage
       await handleFlexMessageSelect(message.id);
-      console.log("FlexMessage 創建成功:", message);
+      console.log("[VisualBotEditor] FlexMessage 創建成功:", message);
     } catch (_error) {
       console.error("Error occurred:", _error);
       throw error;
@@ -258,7 +264,7 @@ export const VisualBotEditor: React.FC = () => {
         }
       });
 
-      await VisualEditorApi.updateLogicTemplate(templateId, {
+      await dataCache.updateLogicTemplate(templateId, {
         logic_blocks: normalizedLogicBlocks,
         generated_code: data.generatedCode,
       });
@@ -294,7 +300,7 @@ export const VisualBotEditor: React.FC = () => {
         }
       });
 
-      await VisualEditorApi.updateFlexMessage(messageId, {
+      await dataCache.updateFlexMessage(messageId, {
         content: { blocks: normalizedFlexBlocks },
       });
 
@@ -403,11 +409,32 @@ export const VisualBotEditor: React.FC = () => {
     }
   }, [logicBlocks, flexBlocks, isLoadingData, markAsChanged]);
 
-  // 初始化組件
+  // 初始化組件和除錯模式檢測
   useEffect(() => {
     // 組件初始化時為空狀態，等待用戶選擇 Bot
     console.log("視覺化編輯器已載入，請選擇一個 Bot 開始編輯");
-  }, []);
+    
+    // 檢測開發環境，啟用除錯功能
+    const isDevelopment = process.env.NODE_ENV === 'development' || 
+                          window.location.hostname === 'localhost' ||
+                          window.location.hostname.includes('dev');
+    
+    if (isDevelopment) {
+      console.log("[VisualBotEditor] 開發環境檢測到，快取除錯功能可用 (按 Ctrl+Shift+D 開啟)");
+      
+      // 添加快捷鍵監聽器
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+          event.preventDefault();
+          setShowCacheDebug(prev => !prev);
+          console.log("[VisualBotEditor] 快取除錯面板已", showCacheDebug ? '關閉' : '開啟');
+        }
+      };
+      
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showCacheDebug]);
 
   return (
     <DragDropProvider>
@@ -482,6 +509,12 @@ export const VisualBotEditor: React.FC = () => {
             onFlexMessageSave={handleFlexMessageSave}
           />
         </div>
+        
+        {/* 快取除錯面板（僅開發環境） */}
+        <CacheDebugPanel
+          isVisible={showCacheDebug}
+          onToggle={() => setShowCacheDebug(!showCacheDebug)}
+        />
       </div>
     </DragDropProvider>
   );

@@ -10,9 +10,8 @@ import {
 } from "../ui/select";
 import { Loader2, Plus, Save } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
-import VisualEditorApi, {
-  LogicTemplateSummary,
-} from "../../services/visualEditorApi";
+import DataCacheService from "../../services/DataCacheService";
+import { LogicTemplateSummary } from "../../services/visualEditorApi";
 import { generateUnifiedCode } from "../../utils/unifiedCodeGenerator";
 
 interface BlockData {
@@ -46,6 +45,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
   logicBlocks,
   disabled = false,
 }) => {
+  const dataCache = DataCacheService.getInstance();
   const [logicTemplates, setLogicTemplates] = useState<LogicTemplateSummary[]>(
     []
   );
@@ -55,7 +55,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // 載入邏輯模板列表
+  // 載入邏輯模板列表（使用快取服務）
   const loadLogicTemplates = async (botId: string) => {
     if (!botId) {
       setLogicTemplates([]);
@@ -64,11 +64,11 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
 
     setIsLoadingLogicTemplates(true);
     try {
-      const templates =
-        await VisualEditorApi.getBotLogicTemplatesSummary(botId);
+      const templates = await dataCache.getBotLogicTemplatesSummary(botId);
       setLogicTemplates(templates);
+      console.log(`[LogicTemplateSelector] 載入 Bot ${botId} 的邏輯模板列表，共 ${templates.length} 個`);
     } catch (err) {
-      console.warn("載入邏輯模板列表失敗:", err);
+      console.warn("[LogicTemplateSelector] 載入邏輯模板列表失敗:", err);
       setLogicTemplates([]);
     } finally {
       setIsLoadingLogicTemplates(false);
@@ -101,6 +101,7 @@ const LogicTemplateSelector: React.FC<LogicTemplateSelectorProps> = ({
       }
       setNewLogicTemplateName("");
       setShowCreateLogicTemplate(false);
+      // 重新載入邏輯模板列表以顯示新創建的模板
       await loadLogicTemplates(selectedBotId);
       toast({
         title: "創建成功",

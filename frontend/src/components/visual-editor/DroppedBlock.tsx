@@ -11,9 +11,8 @@ import {
   SelectValue,
 } from "../ui/select";
 import { X, Settings, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
-import VisualEditorApi, {
-  FlexMessageSummary,
-} from "../../services/visualEditorApi";
+import DataCacheService from "../../services/DataCacheService";
+import { FlexMessageSummary } from "../../services/visualEditorApi";
 
 interface BlockData {
   [key: string]: unknown;
@@ -60,6 +59,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   onMove,
   onInsert,
 }) => {
+  const dataCache = DataCacheService.getInstance();
   const [isEditing, setIsEditing] = useState(false);
   const [blockData, setBlockData] = useState<BlockData>(block.blockData || {});
   const [showInsertZone, setShowInsertZone] = useState<
@@ -69,16 +69,17 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   const [loadingFlexMessages, setLoadingFlexMessages] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // 載入FLEX訊息列表
+  // 載入FLEX訊息列表（使用快取服務）
   useEffect(() => {
     const loadFlexMessages = async () => {
       if (block.blockType === "reply" && block.blockData.replyType === "flex") {
         setLoadingFlexMessages(true);
         try {
-          const messages = await VisualEditorApi.getUserFlexMessagesSummary();
+          const messages = await dataCache.getUserFlexMessagesSummary();
           setFlexMessages(messages);
+          console.log(`[DroppedBlock] 載入 FlexMessage 列表，共 ${messages.length} 個`);
         } catch (error) {
-          console.error("Error occurred:", error);
+          console.error("[DroppedBlock] 載入 FlexMessage 列表失敗:", error);
           setFlexMessages([]);
         } finally {
           setLoadingFlexMessages(false);
@@ -87,7 +88,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
     };
 
     loadFlexMessages();
-  }, [block.blockType, block.blockData.replyType]);
+  }, [block.blockType, block.blockData.replyType, dataCache]);
 
   // 處理FLEX訊息選擇
   const handleFlexMessageSelect = (value: string) => {

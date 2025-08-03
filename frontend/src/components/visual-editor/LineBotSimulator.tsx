@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Send, User, Bot } from "lucide-react";
-import VisualEditorApi, { FlexMessage } from "../../services/visualEditorApi";
+import DataCacheService from "../../services/DataCacheService";
+import { FlexMessage } from "../../services/visualEditorApi";
 
 interface BlockData {
   [key: string]: unknown;
@@ -179,7 +180,7 @@ const LineBotSimulator: React.FC<LineBotSimulatorProps> = ({ blocks }) => {
       try {
         // 嘗試載入FLEX訊息
         console.log("開始載入FLEX訊息...");
-        const messages = await VisualEditorApi.getUserFlexMessages();
+        const messages = await DataCacheService.getInstance().getUserFlexMessages();
         setFlexMessages(messages);
         console.log("成功載入FLEX訊息:", messages.length, "個");
       } catch (error) {

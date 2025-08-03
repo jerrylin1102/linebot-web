@@ -10,9 +10,8 @@ import {
 } from "../ui/select";
 import { Loader2, Plus, Save } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
-import VisualEditorApi, {
-  FlexMessageSummary,
-} from "../../services/visualEditorApi";
+import DataCacheService from "../../services/DataCacheService";
+import { FlexMessageSummary } from "../../services/visualEditorApi";
 
 interface BlockData {
   [key: string]: unknown;
@@ -43,6 +42,7 @@ const FlexMessageSelector: React.FC<FlexMessageSelectorProps> = ({
   flexBlocks,
   disabled = false,
 }) => {
+  const dataCache = DataCacheService.getInstance();
   const [flexMessages, setFlexMessages] = useState<FlexMessageSummary[]>([]);
   const [isLoadingFlexMessages, setIsLoadingFlexMessages] = useState(false);
   const [newFlexMessageName, setNewFlexMessageName] = useState("");
@@ -50,14 +50,15 @@ const FlexMessageSelector: React.FC<FlexMessageSelectorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // 載入 FlexMessage 列表
+  // 載入 FlexMessage 列表（使用快取服務）
   const loadFlexMessages = async () => {
     setIsLoadingFlexMessages(true);
     try {
-      const messages = await VisualEditorApi.getUserFlexMessagesSummary();
+      const messages = await dataCache.getUserFlexMessagesSummary();
       setFlexMessages(messages);
+      console.log(`[FlexMessageSelector] 載入 FlexMessage 列表，共 ${messages.length} 個`);
     } catch (err) {
-      console.warn("載入 FlexMessage 列表失敗:", err);
+      console.warn("[FlexMessageSelector] 載入 FlexMessage 列表失敗:", err);
       setFlexMessages([]);
     } finally {
       setIsLoadingFlexMessages(false);
