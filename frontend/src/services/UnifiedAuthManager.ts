@@ -16,7 +16,7 @@ import {
   getAuthHeaders,
   isRememberMeActive,
   extendAuthCookies,
-  hasValidAuth
+  hasValidAuth,
 } from "../utils/cookieUtils";
 
 const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5分鐘前刷新
@@ -29,13 +29,13 @@ export interface UnifiedUser {
   picture_url?: string;
   line_id?: string;
   isLineUser?: boolean;
-  login_type: 'traditional' | 'line' | 'oauth';
+  login_type: "traditional" | "line" | "oauth";
 }
 
 export interface TokenInfo {
   access_token: string;
   refresh_token?: string;
-  token_type: 'Bearer' | 'LINE';
+  token_type: "Bearer" | "LINE";
   expires_in?: number;
   scope?: string;
   rememberMe?: boolean; // 新增記住我選項
@@ -44,7 +44,7 @@ export interface TokenInfo {
 export class UnifiedAuthManager {
   private static instance: UnifiedAuthManager;
   private refreshPromise: Promise<boolean> | null = null;
-  
+
   private constructor() {
     // 啟動時清理舊的不統一存儲
     this.migrateOldTokens();
@@ -63,44 +63,56 @@ export class UnifiedAuthManager {
   private migrateOldTokens(): void {
     try {
       // 檢查舊的 localStorage token
-      const oldAuthToken = localStorage.getItem('auth_token') || localStorage.getItem('unified_access_token');
-      const oldLineToken = localStorage.getItem('line_token');
-      const oldUserData = localStorage.getItem('unified_user_data') || localStorage.getItem('user_data');
-      
+      const oldAuthToken =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("unified_access_token");
+      const oldLineToken = localStorage.getItem("line_token");
+      const oldUserData =
+        localStorage.getItem("unified_user_data") ||
+        localStorage.getItem("user_data");
+
       if (oldAuthToken && !getAuthToken()) {
         // 遷移到 cookie（預設為會話模式）
-        setAuthToken(oldAuthToken, false, 'Bearer');
-        console.log('已將舊 localStorage token 遷移到 cookie');
+        setAuthToken(oldAuthToken, false, "Bearer");
+        console.log("已將舊 localStorage token 遷移到 cookie");
       }
-      
+
       if (oldLineToken && !getAuthToken()) {
         // 遷移 LINE token 到 cookie
-        setAuthToken(oldLineToken, false, 'LINE');
-        console.log('已將舊 LINE token 遷移到 cookie');
+        setAuthToken(oldLineToken, false, "LINE");
+        console.log("已將舊 LINE token 遷移到 cookie");
       }
-      
+
       if (oldUserData && !getUserData()) {
         try {
           const userData = JSON.parse(oldUserData);
           setUserData(userData, false);
-          console.log('已將舊用戶資料遷移到 cookie');
+          console.log("已將舊用戶資料遷移到 cookie");
         } catch (_err) {
-          console.warn('舊用戶資料格式錯誤，跳過遷移');
+          console.warn("舊用戶資料格式錯誤，跳過遷移");
         }
       }
-      
+
       // 清理所有舊的 localStorage 項目
       const oldKeys = [
-        'auth_token', 'line_token', 'username', 'email', 'display_name',
-        'unified_access_token', 'unified_refresh_token', 'unified_user_data',
-        'unified_token_type', 'user_data', 'token_type'
+        "auth_token",
+        "line_token",
+        "username",
+        "email",
+        "display_name",
+        "unified_access_token",
+        "unified_refresh_token",
+        "unified_user_data",
+        "unified_token_type",
+        "user_data",
+        "token_type",
       ];
-      
-      oldKeys.forEach(key => {
+
+      oldKeys.forEach((key) => {
         localStorage.removeItem(key);
       });
-      
-      console.log('舊 localStorage 資料遷移完成');
+
+      console.log("舊 localStorage 資料遷移完成");
     } catch (error) {
       console.error("Error occurred:", error);
     }
@@ -109,22 +121,28 @@ export class UnifiedAuthManager {
   /**
    * 安全地設定token信息到 cookies
    */
-  public setTokenInfo(tokenInfo: TokenInfo, loginType: UnifiedUser['login_type'], rememberMe = false): void {
+  public setTokenInfo(
+    tokenInfo: TokenInfo,
+    loginType: UnifiedUser["login_type"],
+    rememberMe = false
+  ): void {
     try {
       // 驗證token格式
       if (!this.validateTokenFormat(tokenInfo.access_token)) {
-        throw new Error('無效的token格式');
+        throw new Error("無效的token格式");
       }
 
       // 使用 cookie 工具設定 token
       setAuthToken(tokenInfo.access_token, rememberMe, tokenInfo.token_type);
-      
+
       // 如果有 refresh token，也要設定
       if (tokenInfo.refresh_token) {
         setRefreshToken(tokenInfo.refresh_token);
       }
-      
-      console.log(`Token 已設定 - 類型: ${tokenInfo.token_type}, 記住我: ${rememberMe}`);
+
+      console.log(
+        `Token 已設定 - 類型: ${tokenInfo.token_type}, 記住我: ${rememberMe}`
+      );
     } catch (error) {
       console.error("Error occurred:", error);
       throw error;
@@ -138,7 +156,7 @@ export class UnifiedAuthManager {
     try {
       const userData = {
         ...user,
-        login_time: Date.now()
+        login_time: Date.now(),
       };
       setUserData(userData, rememberMe);
       console.log(`用戶資料已設定 - 記住我: ${rememberMe}`);
@@ -172,7 +190,7 @@ export class UnifiedAuthManager {
    */
   public async isAuthenticated(): Promise<boolean> {
     const token = this.getAccessToken();
-    
+
     if (!token) return false;
 
     // 檢查token是否即將過期
@@ -205,8 +223,8 @@ export class UnifiedAuthManager {
     try {
       const payload = parseJWTToken(token);
       if (!payload?.exp) return false;
-      
-      const timeToExpiry = (payload.exp * 1000) - Date.now();
+
+      const timeToExpiry = payload.exp * 1000 - Date.now();
       return timeToExpiry <= TOKEN_REFRESH_THRESHOLD;
     } catch {
       return true; // 解析失敗視為即將過期
@@ -225,32 +243,32 @@ export class UnifiedAuthManager {
     this.refreshPromise = this.performTokenRefresh();
     const result = await this.refreshPromise;
     this.refreshPromise = null;
-    
+
     return result;
   }
 
   private async performTokenRefresh(): Promise<boolean> {
     try {
       const refreshToken = getRefreshToken();
-      
+
       if (!refreshToken) {
-        console.log('沒有 refresh token，無法刷新');
+        console.log("沒有 refresh token，無法刷新");
         return false;
       }
 
       // 調用後端的 refresh API
-      const response = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+      const response = await fetch("/api/v1/auth/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        credentials: 'include', // 自動攜帶 cookies
+        credentials: "include", // 自動攜帶 cookies
       });
 
       if (!response.ok) {
-        console.error('Token 刷新失敗:', response.status, response.statusText);
-        
+        console.error("Token 刷新失敗:", response.status, response.statusText);
+
         // 如果是 401，表示 refresh token 也過期了，調用 refresh 失效處理
         if (response.status === 401) {
           this.handleRefreshFailure();
@@ -259,21 +277,25 @@ export class UnifiedAuthManager {
       }
 
       const tokenData = await response.json();
-      
+
       // 更新 token 信息
       if (tokenData.access_token) {
-        setAuthToken(tokenData.access_token, true, tokenData.token_type || 'Bearer'); // refresh 的都是記住我模式
-        
+        setAuthToken(
+          tokenData.access_token,
+          true,
+          tokenData.token_type || "Bearer"
+        ); // refresh 的都是記住我模式
+
         if (tokenData.refresh_token) {
           setRefreshToken(tokenData.refresh_token);
         }
-        
+
         // 如果有用戶信息，也更新
         if (tokenData.user) {
           setUserData(tokenData.user, true);
         }
-        
-        console.log('Token 刷新成功');
+
+        console.log("Token 刷新成功");
         return true;
       }
 
@@ -295,14 +317,14 @@ export class UnifiedAuthManager {
    * 驗證token格式
    */
   private validateTokenFormat(token: string): boolean {
-    if (!token || typeof token !== 'string') return false;
-    
+    if (!token || typeof token !== "string") return false;
+
     // JWT格式驗證
-    if (token.includes('.')) {
-      const parts = token.split('.');
+    if (token.includes(".")) {
+      const parts = token.split(".");
       return parts.length === 3;
     }
-    
+
     // LINE token格式驗證（簡單長度檢查）
     return token.length > 10;
   }
@@ -314,16 +336,24 @@ export class UnifiedAuthManager {
     try {
       // 清除所有認證 cookies
       clearAllAuthCookies();
-      
+
       // 清除可能殘留的 localStorage（確保徹底清理）
       const oldKeys = [
-        'auth_token', 'line_token', 'username', 'email', 'display_name',
-        'user_data', 'token_type', 'unified_access_token', 'unified_refresh_token',
-        'unified_user_data', 'unified_token_type'
+        "auth_token",
+        "line_token",
+        "username",
+        "email",
+        "display_name",
+        "user_data",
+        "token_type",
+        "unified_access_token",
+        "unified_refresh_token",
+        "unified_user_data",
+        "unified_token_type",
       ];
-      oldKeys.forEach(key => localStorage.removeItem(key));
-      
-      console.log('所有認證資料已清除');
+      oldKeys.forEach((key) => localStorage.removeItem(key));
+
+      console.log("所有認證資料已清除");
     } catch (error) {
       console.error("Error occurred:", error);
     }
@@ -334,57 +364,62 @@ export class UnifiedAuthManager {
    */
   public handleAuthError(error: unknown): void {
     console.error("Error occurred:", error);
-    
+
     // 如果是401錯誤，根據記住我狀態決定處理方式
-    if (error && typeof error === 'object' && error !== null) {
+    if (error && typeof error === "object" && error !== null) {
       const errorObj = error as Record<string, unknown>;
-      const is401Error = errorObj.status === 401 || 
-          (typeof errorObj.message === 'string' && errorObj.message.includes('401'));
-      
+      const is401Error =
+        errorObj.status === 401 ||
+        (typeof errorObj.message === "string" &&
+          errorObj.message.includes("401"));
+
       if (is401Error) {
         const isRememberMe = this.isRememberMeActive();
-        
+
         if (isRememberMe) {
           // 記住我模式下，不立即清除認證信息
           // 可能只是 access token 過期，refresh token 可能還有效
-          console.log('記住我模式下的認證錯誤，保留用戶狀態，嘗試自動恢復');
-          
+          console.log("記住我模式下的認證錯誤，保留用戶狀態，嘗試自動恢復");
+
           // 可以在這裡觸發一個事件，讓 UI 顯示「正在恢復會話」的提示
-          this.dispatchAuthEvent('auth_recovery_needed', {
-            message: '會話過期，正在嘗試自動恢復...',
-            isRememberMe: true
+          this.dispatchAuthEvent("auth_recovery_needed", {
+            message: "會話過期，正在嘗試自動恢復...",
+            isRememberMe: true,
           });
         } else {
           // 非記住我模式，直接清除認證信息
-          console.log('非記住我模式的認證錯誤，清除認證信息');
+          console.log("非記住我模式的認證錯誤，清除認證信息");
           this.clearAuth();
-          
-          this.dispatchAuthEvent('auth_expired', {
-            message: '會話已過期，請重新登入',
-            isRememberMe: false
+
+          this.dispatchAuthEvent("auth_expired", {
+            message: "會話已過期，請重新登入",
+            isRememberMe: false,
           });
         }
       }
     }
   }
-  
+
   /**
    * 當 refresh token 也失效時的處理
    */
   public handleRefreshFailure(): void {
-    console.log('Refresh token 失效，清除所有認證信息');
+    console.log("Refresh token 失效，清除所有認證信息");
     this.clearAuth();
-    
-    this.dispatchAuthEvent('auth_refresh_failed', {
-      message: '認證已過期，請重新登入',
-      isRememberMe: true
+
+    this.dispatchAuthEvent("auth_refresh_failed", {
+      message: "認證已過期，請重新登入",
+      isRememberMe: true,
     });
   }
-  
+
   /**
    * 派發認證相關事件
    */
-  private dispatchAuthEvent(eventType: string, detail: Record<string, unknown>): void {
+  private dispatchAuthEvent(
+    eventType: string,
+    detail: Record<string, unknown>
+  ): void {
     try {
       const event = new CustomEvent(eventType, { detail });
       window.dispatchEvent(event);
@@ -403,7 +438,7 @@ export class UnifiedAuthManager {
   /**
    * 檢查特定登錄類型
    */
-  public isLoginType(type: UnifiedUser['login_type']): boolean {
+  public isLoginType(type: UnifiedUser["login_type"]): boolean {
     const user = this.getUserInfo();
     return user?.login_type === type;
   }

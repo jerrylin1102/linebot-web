@@ -1,5 +1,5 @@
-import React from 'react';
-import { VisualBotEditor } from '../components/visual-editor/VisualBotEditor';
+import React from "react";
+import { VisualBotEditor } from "../components/visual-editor/VisualBotEditor";
 
 const VisualBotEditorPage: React.FC = () => {
   return (

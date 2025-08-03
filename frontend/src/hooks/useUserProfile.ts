@@ -26,14 +26,14 @@ export const useUserProfile = () => {
       const response = await apiClient.getProfile();
       if (response.status === 200 && response.data) {
         const userData = response.data;
-        
+
         // 合併數據，確保 display_name 有值
         const mergedUserData = {
           ...userData,
           display_name: userData.display_name || userData.username || "",
           username: userData.username || "",
         };
-        
+
         setUser(mergedUserData);
 
         // 如果是 LINE 用戶，使用 LINE 頭像
@@ -113,18 +113,18 @@ export const useUserProfile = () => {
           // 成功上傳，重新載入頭像
           const avatarResponse = await apiClient.getUserAvatar();
           let newAvatarUrl = null;
-          
+
           if (avatarResponse.status === 200 && avatarResponse.data?.avatar) {
             newAvatarUrl = avatarResponse.data.avatar;
             setUserImage(newAvatarUrl);
           }
-          
+
           // 發送頭像更新事件給其他組件（如DashboardNavbar）
-          const avatarUpdateEvent = new CustomEvent('avatarUpdated', {
-            detail: { avatar: newAvatarUrl }
+          const avatarUpdateEvent = new CustomEvent("avatarUpdated", {
+            detail: { avatar: newAvatarUrl },
           });
           window.dispatchEvent(avatarUpdateEvent);
-          
+
           toast({
             title: "頭像更新成功",
             description: "您的頭像已成功更新",
@@ -137,7 +137,8 @@ export const useUserProfile = () => {
         toast({
           variant: "destructive",
           title: "頭像上傳失敗",
-          description: _error instanceof Error ? _error.message : "無法上傳頭像",
+          description:
+            _error instanceof Error ? _error.message : "無法上傳頭像",
         });
         return false;
       } finally {
@@ -154,13 +155,13 @@ export const useUserProfile = () => {
 
       if (response.status === 200) {
         setUserImage(null);
-        
+
         // 發送頭像刪除事件給其他組件（如DashboardNavbar）
-        const avatarUpdateEvent = new CustomEvent('avatarUpdated', {
-          detail: { avatar: null }
+        const avatarUpdateEvent = new CustomEvent("avatarUpdated", {
+          detail: { avatar: null },
         });
         window.dispatchEvent(avatarUpdateEvent);
-        
+
         toast({
           title: "頭像已刪除",
           description: "您的頭像已成功刪除",
@@ -183,10 +184,7 @@ export const useUserProfile = () => {
 
   const changePassword = useCallback(
     async (oldPassword: string, newPassword: string) => {
-      const response = await apiClient.changePassword(
-        oldPassword,
-        newPassword
-      );
+      const response = await apiClient.changePassword(oldPassword, newPassword);
 
       if (response.status === 200) {
         return true;

@@ -93,7 +93,9 @@ const UserProfileSection = ({
                 try {
                   const response = await fetch(avatar);
                   const blob = await response.blob();
-                  const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+                  const file = new File([blob], "avatar.jpg", {
+                    type: "image/jpeg",
+                  });
                   await onAvatarUpload(file);
                 } catch (_error) {
                   console.error("Error occurred:", _error);

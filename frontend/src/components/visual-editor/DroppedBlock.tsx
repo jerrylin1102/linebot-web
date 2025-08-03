@@ -1,11 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { X, Settings, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
-import VisualEditorApi, { FlexMessageSummary } from '../../services/visualEditorApi';
+import React, { useState, useRef, useEffect } from "react";
+import { useDrag, useDrop } from "react-dnd";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { X, Settings, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import VisualEditorApi, {
+  FlexMessageSummary,
+} from "../../services/visualEditorApi";
 
 interface BlockData {
   [key: string]: unknown;
@@ -44,17 +52,19 @@ interface DroppedBlockProps {
   onInsert?: (index: number, item: Block) => void;
 }
 
-const DroppedBlock: React.FC<DroppedBlockProps> = ({ 
-  block, 
-  index, 
-  onRemove, 
-  onUpdate, 
-  onMove, 
-  onInsert 
+const DroppedBlock: React.FC<DroppedBlockProps> = ({
+  block,
+  index,
+  onRemove,
+  onUpdate,
+  onMove,
+  onInsert,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [blockData, setBlockData] = useState<BlockData>(block.blockData || {});
-  const [showInsertZone, setShowInsertZone] = useState<'above' | 'below' | null>(null);
+  const [showInsertZone, setShowInsertZone] = useState<
+    "above" | "below" | null
+  >(null);
   const [flexMessages, setFlexMessages] = useState<FlexMessageSummary[]>([]);
   const [loadingFlexMessages, setLoadingFlexMessages] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +72,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   // 載入FLEX訊息列表
   useEffect(() => {
     const loadFlexMessages = async () => {
-      if (block.blockType === 'reply' && block.blockData.replyType === 'flex') {
+      if (block.blockType === "reply" && block.blockData.replyType === "flex") {
         setLoadingFlexMessages(true);
         try {
           const messages = await VisualEditorApi.getUserFlexMessagesSummary();
@@ -81,23 +91,23 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
 
   // 處理FLEX訊息選擇
   const handleFlexMessageSelect = (value: string) => {
-    const selectedMessage = flexMessages.find(msg => msg.id === value);
+    const selectedMessage = flexMessages.find((msg) => msg.id === value);
     if (selectedMessage) {
       setBlockData({
         ...blockData,
         flexMessageId: value,
-        flexMessageName: selectedMessage.name
+        flexMessageName: selectedMessage.name,
       });
     }
   };
 
   // 拖拽功能 - 支持重排
   const [{ isDragging }, drag, _preview] = useDrag({
-    type: 'dropped-block',
-    item: () => ({ 
-      index, 
+    type: "dropped-block",
+    item: () => ({
+      index,
       block,
-      id: `dropped-${index}` 
+      id: `dropped-${index}`,
     }),
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -106,30 +116,34 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
 
   // 拖拽目標 - 支持插入和重排
   const [{ isOver, dropPosition: _dropPosition }, drop] = useDrop({
-    accept: ['block', 'dropped-block'],
+    accept: ["block", "dropped-block"],
     hover: (item: Block & { index?: number; type?: string }, monitor) => {
       if (!ref.current) return;
 
       // 處理重排 (dropped-block 到 dropped-block)
-      if (item.type === 'dropped-block' || (item.index !== undefined && typeof item.index === 'number')) {
+      if (
+        item.type === "dropped-block" ||
+        (item.index !== undefined && typeof item.index === "number")
+      ) {
         const dragIndex = item.index;
         const hoverIndex = index;
 
         if (dragIndex === hoverIndex) return;
 
         const hoverBoundingRect = ref.current.getBoundingClientRect();
-        const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
         const clientOffset = monitor.getClientOffset();
-        
+
         if (!clientOffset) return;
-        
+
         const hoverClientY = clientOffset.y - hoverBoundingRect.top;
 
         // 設置插入位置提示
         if (hoverClientY < hoverMiddleY / 2) {
-          setShowInsertZone('above');
+          setShowInsertZone("above");
         } else if (hoverClientY > hoverBoundingRect.height - hoverMiddleY / 2) {
-          setShowInsertZone('below');
+          setShowInsertZone("below");
         } else {
           setShowInsertZone(null);
         }
@@ -148,16 +162,17 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
         // 處理新積木插入 (block 到 dropped-block)
         const hoverBoundingRect = ref.current.getBoundingClientRect();
         const clientOffset = monitor.getClientOffset();
-        
+
         if (!clientOffset) return;
-        
+
         const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-        const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
 
         if (hoverClientY < hoverMiddleY) {
-          setShowInsertZone('above');
+          setShowInsertZone("above");
         } else {
-          setShowInsertZone('below');
+          setShowInsertZone("below");
         }
       }
     },
@@ -168,11 +183,12 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
       if (item.blockType && onInsert) {
         const hoverBoundingRect = ref.current.getBoundingClientRect();
         const clientOffset = monitor.getClientOffset();
-        
+
         if (!clientOffset) return;
-        
+
         const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-        const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+        const hoverMiddleY =
+          (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
 
         const insertIndex = hoverClientY < hoverMiddleY ? index : index + 1;
         onInsert(insertIndex, item);
@@ -196,53 +212,61 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
 
   const getBlockColor = (_blockType: string): string => {
     const colorMap: Record<string, string> = {
-      'event': 'bg-orange-500',
-      'reply': 'bg-green-500',
-      'control': 'bg-purple-500',
-      'setting': 'bg-gray-500',
-      'flex-container': 'bg-indigo-500',
-      'flex-content': 'bg-blue-500',
-      'flex-layout': 'bg-teal-500'
+      event: "bg-orange-500",
+      reply: "bg-green-500",
+      control: "bg-purple-500",
+      setting: "bg-gray-500",
+      "flex-container": "bg-indigo-500",
+      "flex-content": "bg-blue-500",
+      "flex-layout": "bg-teal-500",
     };
-    return colorMap[block.blockType] || 'bg-blue-500';
+    return colorMap[block.blockType] || "bg-blue-500";
   };
 
   const renderBlockContent = () => {
     switch (block.blockType) {
-      case 'event':
+      case "event":
         return (
           <div>
             <div className="font-medium">{block.blockData.title}</div>
             {isEditing && (
               <div className="mt-2 space-y-2">
-                <Input 
+                <Input
                   placeholder="事件條件"
-                  value={blockData.condition || ''}
-                  onChange={(e) => setBlockData({...blockData, condition: e.target.value})}
+                  value={blockData.condition || ""}
+                  onChange={(e) =>
+                    setBlockData({ ...blockData, condition: e.target.value })
+                  }
                   className="text-black"
                 />
               </div>
             )}
           </div>
         );
-      case 'reply':
+      case "reply":
         return (
           <div>
             <div className="font-medium">{block.blockData.title}</div>
             {isEditing && (
               <div className="mt-2 space-y-2">
                 {/* 根據回覆類型顯示不同的編輯介面 */}
-                {block.blockData.replyType === 'flex' ? (
+                {block.blockData.replyType === "flex" ? (
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-white/80">選擇FLEX訊息模板:</div>
-                    <Select 
-                      value={blockData.flexMessageId || ''} 
+                    <div className="text-sm font-medium text-white/80">
+                      選擇FLEX訊息模板:
+                    </div>
+                    <Select
+                      value={blockData.flexMessageId || ""}
                       onValueChange={handleFlexMessageSelect}
                       disabled={loadingFlexMessages}
                     >
                       <SelectTrigger className="text-black">
-                        <SelectValue 
-                          placeholder={loadingFlexMessages ? "載入中..." : "選擇FLEX訊息模板"} 
+                        <SelectValue
+                          placeholder={
+                            loadingFlexMessages
+                              ? "載入中..."
+                              : "選擇FLEX訊息模板"
+                          }
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -266,10 +290,12 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
                     )}
                   </div>
                 ) : (
-                  <Textarea 
+                  <Textarea
                     placeholder="回覆內容"
-                    value={blockData.content || ''}
-                    onChange={(e) => setBlockData({...blockData, content: e.target.value})}
+                    value={blockData.content || ""}
+                    onChange={(e) =>
+                      setBlockData({ ...blockData, content: e.target.value })
+                    }
                     className="text-black"
                     rows={3}
                   />
@@ -277,29 +303,38 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
               </div>
             )}
             {/* 顯示當前選擇的FLEX訊息（非編輯模式） */}
-            {!isEditing && block.blockData.replyType === 'flex' && block.blockData.flexMessageName && (
-              <div className="text-xs text-white/70 mt-1">
-                FLEX模板: {block.blockData.flexMessageName}
-              </div>
-            )}
+            {!isEditing &&
+              block.blockData.replyType === "flex" &&
+              block.blockData.flexMessageName && (
+                <div className="text-xs text-white/70 mt-1">
+                  FLEX模板: {block.blockData.flexMessageName}
+                </div>
+              )}
           </div>
         );
-      case 'flex-content':
+      case "flex-content":
         return (
           <div>
             <div className="font-medium">{block.blockData.title}</div>
             {isEditing && (
               <div className="mt-2 space-y-2">
-                {block.blockData.contentType === 'text' && (
+                {block.blockData.contentType === "text" && (
                   <>
-                    <Input 
+                    <Input
                       placeholder="文字內容"
-                      value={blockData.text || ''}
-                      onChange={(e) => setBlockData({...blockData, text: e.target.value})}
+                      value={blockData.text || ""}
+                      onChange={(e) =>
+                        setBlockData({ ...blockData, text: e.target.value })
+                      }
                       className="text-black"
                     />
                     <div className="grid grid-cols-2 gap-2">
-                      <Select value={blockData.size || 'md'} onValueChange={(value) => setBlockData({...blockData, size: value})}>
+                      <Select
+                        value={blockData.size || "md"}
+                        onValueChange={(value) =>
+                          setBlockData({ ...blockData, size: value })
+                        }
+                      >
                         <SelectTrigger className="text-black">
                           <SelectValue placeholder="文字大小" />
                         </SelectTrigger>
@@ -311,7 +346,12 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
                           <SelectItem value="xl">極大</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Select value={blockData.weight || 'regular'} onValueChange={(value) => setBlockData({...blockData, weight: value})}>
+                      <Select
+                        value={blockData.weight || "regular"}
+                        onValueChange={(value) =>
+                          setBlockData({ ...blockData, weight: value })
+                        }
+                      >
                         <SelectTrigger className="text-black">
                           <SelectValue placeholder="字重" />
                         </SelectTrigger>
@@ -321,27 +361,33 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
                         </SelectContent>
                       </Select>
                     </div>
-                    <Input 
+                    <Input
                       placeholder="文字顏色 (例如: #000000)"
-                      value={blockData.color || ''}
-                      onChange={(e) => setBlockData({...blockData, color: e.target.value})}
+                      value={blockData.color || ""}
+                      onChange={(e) =>
+                        setBlockData({ ...blockData, color: e.target.value })
+                      }
                       className="text-black"
                     />
                   </>
                 )}
-                {block.blockData.contentType === 'image' && (
-                  <Input 
+                {block.blockData.contentType === "image" && (
+                  <Input
                     placeholder="圖片 URL"
-                    value={blockData.url || ''}
-                    onChange={(e) => setBlockData({...blockData, url: e.target.value})}
+                    value={blockData.url || ""}
+                    onChange={(e) =>
+                      setBlockData({ ...blockData, url: e.target.value })
+                    }
                     className="text-black"
                   />
                 )}
-                {block.blockData.contentType === 'button' && (
-                  <Input 
+                {block.blockData.contentType === "button" && (
+                  <Input
                     placeholder="按鈕文字"
-                    value={blockData.text || ''}
-                    onChange={(e) => setBlockData({...blockData, text: e.target.value})}
+                    value={blockData.text || ""}
+                    onChange={(e) =>
+                      setBlockData({ ...blockData, text: e.target.value })
+                    }
                     className="text-black"
                   />
                 )}
@@ -349,13 +395,18 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
             )}
           </div>
         );
-      case 'flex-container':
+      case "flex-container":
         return (
           <div>
             <div className="font-medium">{block.blockData.title}</div>
-            {isEditing && block.blockData.containerType === 'box' && (
+            {isEditing && block.blockData.containerType === "box" && (
               <div className="mt-2 space-y-2">
-                <Select value={blockData.layout || 'vertical'} onValueChange={(value) => setBlockData({...blockData, layout: value})}>
+                <Select
+                  value={blockData.layout || "vertical"}
+                  onValueChange={(value) =>
+                    setBlockData({ ...blockData, layout: value })
+                  }
+                >
                   <SelectTrigger className="text-black">
                     <SelectValue placeholder="佈局方向" />
                   </SelectTrigger>
@@ -364,7 +415,12 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
                     <SelectItem value="horizontal">水平</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={blockData.spacing || 'md'} onValueChange={(value) => setBlockData({...blockData, spacing: value})}>
+                <Select
+                  value={blockData.spacing || "md"}
+                  onValueChange={(value) =>
+                    setBlockData({ ...blockData, spacing: value })
+                  }
+                >
                   <SelectTrigger className="text-black">
                     <SelectValue placeholder="間距" />
                   </SelectTrigger>
@@ -380,13 +436,18 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
             )}
           </div>
         );
-      case 'flex-layout':
+      case "flex-layout":
         return (
           <div>
             <div className="font-medium">{block.blockData.title}</div>
-            {isEditing && block.blockData.layoutType === 'spacer' && (
+            {isEditing && block.blockData.layoutType === "spacer" && (
               <div className="mt-2 space-y-2">
-                <Select value={blockData.size || 'md'} onValueChange={(value) => setBlockData({...blockData, size: value})}>
+                <Select
+                  value={blockData.size || "md"}
+                  onValueChange={(value) =>
+                    setBlockData({ ...blockData, size: value })
+                  }
+                >
                   <SelectTrigger className="text-black">
                     <SelectValue placeholder="間距大小" />
                   </SelectTrigger>
@@ -414,18 +475,18 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
   return (
     <div className="relative">
       {/* 上方插入區域 */}
-      {showInsertZone === 'above' && (
+      {showInsertZone === "above" && (
         <div className="absolute -top-2 left-0 right-0 h-1 bg-blue-400 rounded-full z-10 shadow-lg">
           <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-400 rounded-full"></div>
         </div>
       )}
 
-      <div 
+      <div
         ref={ref}
         onMouseLeave={handleMouseLeave}
         className={`${getBlockColor(block.blockType)} text-white p-3 rounded-lg shadow-sm transition-all duration-200 ${
-          isDragging ? 'opacity-50 scale-95 rotate-2' : 'opacity-100 scale-100'
-        } ${isOver ? 'ring-2 ring-blue-300 ring-opacity-50' : ''}`}
+          isDragging ? "opacity-50 scale-95 rotate-2" : "opacity-100 scale-100"
+        } ${isOver ? "ring-2 ring-blue-300 ring-opacity-50" : ""}`}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-2 flex-1">
@@ -433,9 +494,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
             <div className="pt-1 cursor-move hover:bg-white/20 p-1 rounded">
               <GripVertical className="h-4 w-4 text-white/70" />
             </div>
-            <div className="flex-1">
-              {renderBlockContent()}
-            </div>
+            <div className="flex-1">{renderBlockContent()}</div>
           </div>
           <div className="flex items-center space-x-1 ml-2">
             {/* 快速移動按鈕 */}
@@ -479,7 +538,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
             </Button>
           </div>
         </div>
-        
+
         {isEditing && (
           <div className="mt-3 pt-3 border-t border-white/20">
             <Button
@@ -499,7 +558,7 @@ const DroppedBlock: React.FC<DroppedBlockProps> = ({
       </div>
 
       {/* 下方插入區域 */}
-      {showInsertZone === 'below' && (
+      {showInsertZone === "below" && (
         <div className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-400 rounded-full z-10 shadow-lg">
           <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-400 rounded-full"></div>
         </div>

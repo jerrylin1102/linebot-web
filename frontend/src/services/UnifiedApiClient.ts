@@ -3,9 +3,9 @@
  * 集成統一認證管理、自動重試、錯誤處理
  */
 
-import { authManager } from './UnifiedAuthManager';
-import { secureLog } from '../utils/secureTokenUtils';
-import { API_CONFIG, getApiUrl } from '../config/apiConfig';
+import { authManager } from "./UnifiedAuthManager";
+import { secureLog } from "../utils/secureTokenUtils";
+import { API_CONFIG, getApiUrl } from "../config/apiConfig";
 
 interface ApiResponse<T = unknown> {
   data?: T;
@@ -15,7 +15,7 @@ interface ApiResponse<T = unknown> {
 }
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   headers?: Record<string, string>;
   body?: unknown;
   retries?: number;
@@ -45,7 +45,7 @@ export class UnifiedApiClient {
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const {
-      method = 'GET',
+      method = "GET",
       headers = {},
       body,
       retries = this.defaultRetries,
@@ -62,7 +62,7 @@ export class UnifiedApiClient {
         const requestInit: RequestInit = {
           method,
           headers: requestHeaders,
-          credentials: 'include',
+          credentials: "include",
           ...(body && { body: JSON.stringify(body) }),
         };
 
@@ -81,18 +81,18 @@ export class UnifiedApiClient {
 
         return await this.handleResponse<T>(response);
       } catch (_error) {
-        lastError = _error instanceof Error ? _error : new Error('請求失敗');
-        
+        lastError = _error instanceof Error ? _error : new Error("請求失敗");
+
         // 如果是 token 刷新成功，立即重試一次（不計入重試次數）
-        if (_error instanceof Error && _error.message === 'TOKEN_REFRESHED') {
-          secureLog('Token 已刷新，立即重試請求');
+        if (_error instanceof Error && _error.message === "TOKEN_REFRESHED") {
+          secureLog("Token 已刷新，立即重試請求");
           continue;
         }
-        
+
         // 如果是最後一次嘗試或者是認證錯誤，不再重試
         if (
           attempt === retries ||
-          _error instanceof Error && _error.message.includes('401')
+          (_error instanceof Error && _error.message.includes("401"))
         ) {
           break;
         }
@@ -104,7 +104,7 @@ export class UnifiedApiClient {
     }
 
     return {
-      error: lastError?.message || '請求失敗',
+      error: lastError?.message || "請求失敗",
       status: 0,
     };
   }
@@ -117,15 +117,15 @@ export class UnifiedApiClient {
     skipAuth: boolean
   ): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
       ...customHeaders,
     };
 
     if (!skipAuth) {
       // 檢查認證狀態並自動刷新
       const isAuthenticated = await authManager.isAuthenticated();
-      
+
       if (isAuthenticated) {
         const authHeaders = authManager.getAuthHeaders();
         Object.assign(headers, authHeaders);
@@ -140,12 +140,12 @@ export class UnifiedApiClient {
    */
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     const { status } = response;
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
 
     try {
       // 嘗試解析JSON
       let data: unknown;
-      if (contentType?.includes('application/json')) {
+      if (contentType?.includes("application/json")) {
         data = await response.json();
       } else {
         data = await response.text();
@@ -153,29 +153,32 @@ export class UnifiedApiClient {
 
       // 處理認證失敗
       if (status === 401) {
-        secureLog('收到 401 錯誤，嘗試刷新 token');
-        
+        secureLog("收到 401 錯誤，嘗試刷新 token");
+
         // 嘗試刷新 token（只對記住我的用戶）
         if (authManager.isRememberMeActive()) {
           try {
             const refreshed = await authManager.refreshToken();
             if (refreshed) {
-              secureLog('Token 刷新成功，重新嘗試原始請求');
+              secureLog("Token 刷新成功，重新嘗試原始請求");
               // 這裡不返回錯誤，讓外層重試邏輯來處理
-              throw new Error('TOKEN_REFRESHED');
+              throw new Error("TOKEN_REFRESHED");
             }
           } catch (refreshError) {
-            if (refreshError.message === 'TOKEN_REFRESHED') {
+            if (refreshError.message === "TOKEN_REFRESHED") {
               throw refreshError; // 重新拋出以觸發重試
             }
-            secureLog('Token 刷新失敗:', refreshError);
+            secureLog("Token 刷新失敗:", refreshError);
           }
         }
-        
+
         // 如果不是記住我模式或刷新失敗，清除認證信息
-        authManager.handleAuthError({ status, message: data.error || '認證已過期' });
+        authManager.handleAuthError({
+          status,
+          message: data.error || "認證已過期",
+        });
         return {
-          error: data.error || '認證已過期，請重新登入',
+          error: data.error || "認證已過期，請重新登入",
           status,
         };
       }
@@ -210,26 +213,26 @@ export class UnifiedApiClient {
    */
   private getErrorMessage(status: number, data?: unknown): string {
     // 優先使用API返回的錯誤信息
-    if (data && typeof data === 'object' && data !== null) {
+    if (data && typeof data === "object" && data !== null) {
       const errorObj = data as Record<string, unknown>;
-      if (typeof errorObj.error === 'string') return errorObj.error;
-      if (typeof errorObj.detail === 'string') return errorObj.detail;
-      if (typeof errorObj.message === 'string') return errorObj.message;
+      if (typeof errorObj.error === "string") return errorObj.error;
+      if (typeof errorObj.detail === "string") return errorObj.detail;
+      if (typeof errorObj.message === "string") return errorObj.message;
     }
 
     // 默認錯誤信息
     const errorMessages: Record<number, string> = {
-      400: '請求參數錯誤',
-      401: '認證失敗',
-      403: '權限不足',
-      404: '資源不存在',
-      409: '資源衝突',
-      422: '資料驗證失敗',
-      429: '請求過於頻繁',
-      500: '伺服器內部錯誤',
-      502: '網關錯誤',
-      503: '服務暫時不可用',
-      504: '網關超時',
+      400: "請求參數錯誤",
+      401: "認證失敗",
+      403: "權限不足",
+      404: "資源不存在",
+      409: "資源衝突",
+      422: "資料驗證失敗",
+      429: "請求過於頻繁",
+      500: "伺服器內部錯誤",
+      502: "網關錯誤",
+      503: "服務暫時不可用",
+      504: "網關超時",
     };
 
     return errorMessages[status] || `HTTP ${status} 錯誤`;
@@ -239,28 +242,54 @@ export class UnifiedApiClient {
    * 延遲函數
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // HTTP方法包裝器
-  public async get<T = unknown>(endpoint: string, options?: Omit<RequestOptions, 'method'>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
+  public async get<T = unknown>(
+    endpoint: string,
+    options?: Omit<RequestOptions, "method">
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: "GET" });
   }
 
-  public async post<T = unknown>(endpoint: string, data?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'POST', body: data });
+  public async post<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: "POST",
+      body: data,
+    });
   }
 
-  public async put<T = unknown>(endpoint: string, data?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'PUT', body: data });
+  public async put<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: "PUT", body: data });
   }
 
-  public async delete<T = unknown>(endpoint: string, options?: Omit<RequestOptions, 'method'>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+  public async delete<T = unknown>(
+    endpoint: string,
+    options?: Omit<RequestOptions, "method">
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { ...options, method: "DELETE" });
   }
 
-  public async patch<T = unknown>(endpoint: string, data?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { ...options, method: 'PATCH', body: data });
+  public async patch<T = unknown>(
+    endpoint: string,
+    data?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: "PATCH",
+      body: data,
+    });
   }
 
   // 認證相關API
@@ -272,7 +301,11 @@ export class UnifiedApiClient {
     );
   }
 
-  public async register(userData: { username: string; email: string; password: string }): Promise<ApiResponse> {
+  public async register(userData: {
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<ApiResponse> {
     return this.post(
       getApiUrl(API_CONFIG.AUTH.BASE_URL, API_CONFIG.AUTH.ENDPOINTS.REGISTER),
       userData,
@@ -284,10 +317,10 @@ export class UnifiedApiClient {
     const result = await this.post(
       getApiUrl(API_CONFIG.AUTH.BASE_URL, API_CONFIG.AUTH.ENDPOINTS.LOGOUT)
     );
-    
+
     // 無論後端響應如何，都清除本地認證信息
     authManager.clearAuth();
-    
+
     return result;
   }
 
@@ -300,7 +333,10 @@ export class UnifiedApiClient {
   // 用戶資料相關API
   public async getProfile(): Promise<ApiResponse> {
     return this.get(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.GET_PROFILE)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.GET_PROFILE
+      )
     );
   }
 
@@ -310,14 +346,23 @@ export class UnifiedApiClient {
     display_name?: string;
   }): Promise<ApiResponse> {
     return this.put(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.UPDATE_PROFILE),
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.UPDATE_PROFILE
+      ),
       profileData
     );
   }
 
-  public async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse> {
+  public async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<ApiResponse> {
     return this.post(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.CHANGE_PASSWORD),
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.CHANGE_PASSWORD
+      ),
       {
         current_password: currentPassword,
         new_password: newPassword,
@@ -328,13 +373,19 @@ export class UnifiedApiClient {
   // Bot管理相關API
   public async getBots(): Promise<ApiResponse> {
     return this.get(
-      getApiUrl(API_CONFIG.PUZZLE.BASE_URL, API_CONFIG.PUZZLE.ENDPOINTS.GET_BOTS)
+      getApiUrl(
+        API_CONFIG.PUZZLE.BASE_URL,
+        API_CONFIG.PUZZLE.ENDPOINTS.GET_BOTS
+      )
     );
   }
 
   public async getBot(botId: string): Promise<ApiResponse> {
     return this.get(
-      getApiUrl(API_CONFIG.PUZZLE.BASE_URL, API_CONFIG.PUZZLE.ENDPOINTS.GET_BOT(botId))
+      getApiUrl(
+        API_CONFIG.PUZZLE.BASE_URL,
+        API_CONFIG.PUZZLE.ENDPOINTS.GET_BOT(botId)
+      )
     );
   }
 
@@ -344,7 +395,10 @@ export class UnifiedApiClient {
     channel_secret: string;
   }): Promise<ApiResponse> {
     return this.post(
-      getApiUrl(API_CONFIG.PUZZLE.BASE_URL, API_CONFIG.PUZZLE.ENDPOINTS.CREATE_BOT),
+      getApiUrl(
+        API_CONFIG.PUZZLE.BASE_URL,
+        API_CONFIG.PUZZLE.ENDPOINTS.CREATE_BOT
+      ),
       botData
     );
   }
@@ -354,21 +408,30 @@ export class UnifiedApiClient {
     botData: { name?: string; channel_token?: string; channel_secret?: string }
   ): Promise<ApiResponse> {
     return this.put(
-      getApiUrl(API_CONFIG.PUZZLE.BASE_URL, API_CONFIG.PUZZLE.ENDPOINTS.UPDATE_BOT(botId)),
+      getApiUrl(
+        API_CONFIG.PUZZLE.BASE_URL,
+        API_CONFIG.PUZZLE.ENDPOINTS.UPDATE_BOT(botId)
+      ),
       botData
     );
   }
 
   public async deleteBot(botId: string): Promise<ApiResponse> {
     return this.delete(
-      getApiUrl(API_CONFIG.PUZZLE.BASE_URL, API_CONFIG.PUZZLE.ENDPOINTS.DELETE_BOT(botId))
+      getApiUrl(
+        API_CONFIG.PUZZLE.BASE_URL,
+        API_CONFIG.PUZZLE.ENDPOINTS.DELETE_BOT(botId)
+      )
     );
   }
 
   // 用戶頭像相關API
   public async getAvatar(): Promise<ApiResponse> {
     return this.get(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.GET_AVATAR)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.GET_AVATAR
+      )
     );
   }
 
@@ -378,7 +441,10 @@ export class UnifiedApiClient {
 
   public async updateAvatar(avatar: string): Promise<ApiResponse> {
     return this.put(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.UPDATE_AVATAR),
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.UPDATE_AVATAR
+      ),
       { avatar_base64: avatar }
     );
   }
@@ -386,7 +452,7 @@ export class UnifiedApiClient {
   public async uploadAvatar(formData: FormData): Promise<ApiResponse> {
     try {
       // 從 FormData 中獲取文件並轉換為 base64
-      const file = formData.get('avatar') as File;
+      const file = formData.get("avatar") as File;
       if (!file) {
         return {
           error: "未找到頭像文件",
@@ -396,7 +462,7 @@ export class UnifiedApiClient {
 
       // 將文件轉換為 base64
       const base64 = await this.fileToBase64(file);
-      
+
       return this.updateAvatar(base64);
     } catch (_error) {
       return {
@@ -408,7 +474,10 @@ export class UnifiedApiClient {
 
   public async deleteAvatar(): Promise<ApiResponse> {
     return this.delete(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.DELETE_AVATAR)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.DELETE_AVATAR
+      )
     );
   }
 
@@ -425,28 +494,40 @@ export class UnifiedApiClient {
   // 刪除帳號
   public async deleteAccount(): Promise<ApiResponse> {
     return this.delete(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.DELETE_ACCOUNT)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.DELETE_ACCOUNT
+      )
     );
   }
 
   // 重新發送電子郵件驗證
   public async resendEmailVerification(): Promise<ApiResponse> {
     return this.post(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.RESEND_EMAIL_VERIFICATION)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.RESEND_EMAIL_VERIFICATION
+      )
     );
   }
 
   // 檢查電子郵件驗證狀態
   public async checkEmailVerification(): Promise<ApiResponse> {
     return this.get(
-      getApiUrl(API_CONFIG.SETTING.BASE_URL, API_CONFIG.SETTING.ENDPOINTS.CHECK_EMAIL_VERIFICATION)
+      getApiUrl(
+        API_CONFIG.SETTING.BASE_URL,
+        API_CONFIG.SETTING.ENDPOINTS.CHECK_EMAIL_VERIFICATION
+      )
     );
   }
 
   // LINE登入相關API
   public async getLineLoginUrl(): Promise<ApiResponse> {
     return this.post(
-      getApiUrl(API_CONFIG.LINE_LOGIN.BASE_URL, API_CONFIG.LINE_LOGIN.ENDPOINTS.LINE_LOGIN),
+      getApiUrl(
+        API_CONFIG.LINE_LOGIN.BASE_URL,
+        API_CONFIG.LINE_LOGIN.ENDPOINTS.LINE_LOGIN
+      ),
       {},
       { skipAuth: true }
     );
@@ -454,7 +535,10 @@ export class UnifiedApiClient {
 
   public async verifyLineToken(token: string): Promise<ApiResponse> {
     return this.post(
-      getApiUrl(API_CONFIG.LINE_LOGIN.BASE_URL, API_CONFIG.LINE_LOGIN.ENDPOINTS.VERIFY_TOKEN),
+      getApiUrl(
+        API_CONFIG.LINE_LOGIN.BASE_URL,
+        API_CONFIG.LINE_LOGIN.ENDPOINTS.VERIFY_TOKEN
+      ),
       { token },
       { skipAuth: true }
     );

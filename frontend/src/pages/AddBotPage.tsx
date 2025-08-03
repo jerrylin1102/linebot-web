@@ -7,7 +7,7 @@ import { useUnifiedAuth } from "../hooks/useUnifiedAuth";
 const AddBotPage = () => {
   const { user, loading, error } = useUnifiedAuth({
     requireAuth: true,
-    redirectTo: "/login"
+    redirectTo: "/login",
   });
 
   if (loading) {

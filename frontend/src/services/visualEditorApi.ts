@@ -3,9 +3,9 @@
  * 處理與後端的 Bot 選擇和儲存相關 API 通信
  */
 
-import { UnifiedApiClient } from './UnifiedApiClient';
-import { UnifiedBlock } from '../types/block';
-import { API_CONFIG } from '../config/apiConfig';
+import { UnifiedApiClient } from "./UnifiedApiClient";
+import { UnifiedBlock } from "../types/block";
+import { API_CONFIG } from "../config/apiConfig";
 
 // 介面定義
 export interface BotSummary {
@@ -107,7 +107,7 @@ export class VisualEditorApi {
 
       // 檢查回應狀態
       if (response.status === 404) {
-        console.warn('Bot 摘要 API 端點不存在，可能後端尚未啟動');
+        console.warn("Bot 摘要 API 端點不存在，可能後端尚未啟動");
         return [];
       }
 
@@ -119,10 +119,13 @@ export class VisualEditorApi {
     } catch (_error) {
       console.error("Error occurred:", _error);
       // 如果是網路錯誤或 404，返回空陣列而不是拋出錯誤
-      if (error instanceof Error && (error.message.includes('404') || error.message.includes('網路'))) {
+      if (
+        error instanceof Error &&
+        (error.message.includes("404") || error.message.includes("網路"))
+      ) {
         return [];
       }
-      throw new Error('取得 Bot 列表失敗，請稍後再試');
+      throw new Error("取得 Bot 列表失敗，請稍後再試");
     }
   }
 
@@ -130,13 +133,13 @@ export class VisualEditorApi {
    * 儲存視覺化編輯器數據到指定的 Bot
    */
   static async saveVisualEditorData(
-    botId: string, 
-    data: Omit<VisualEditorData, 'bot_id'>
+    botId: string,
+    data: Omit<VisualEditorData, "bot_id">
   ): Promise<VisualEditorResponse> {
     try {
       const payload: VisualEditorData = {
         bot_id: botId,
-        ...data
+        ...data,
       };
 
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/${botId}/visual-editor/save`;
@@ -146,11 +149,11 @@ export class VisualEditorApi {
       );
 
       if (!response.success) {
-        throw new Error(response.error || '儲存失敗');
+        throw new Error(response.error || "儲存失敗");
       }
 
       if (!response.data) {
-        throw new Error('儲存回應格式錯誤');
+        throw new Error("儲存回應格式錯誤");
       }
 
       return response.data;
@@ -159,26 +162,26 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('儲存失敗，請稍後再試');
+      throw new Error("儲存失敗，請稍後再試");
     }
   }
 
   /**
    * 載入指定 Bot 的視覺化編輯器數據
    */
-  static async loadVisualEditorData(botId: string): Promise<VisualEditorResponse> {
+  static async loadVisualEditorData(
+    botId: string
+  ): Promise<VisualEditorResponse> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/${botId}/visual-editor`;
-      const response = await this.apiClient.get<VisualEditorResponse>(
-        endpoint
-      );
+      const response = await this.apiClient.get<VisualEditorResponse>(endpoint);
 
       if (!response.success) {
-        throw new Error(response.error || '載入失敗');
+        throw new Error(response.error || "載入失敗");
       }
 
       if (!response.data) {
-        throw new Error('載入回應格式錯誤');
+        throw new Error("載入回應格式錯誤");
       }
 
       return response.data;
@@ -187,7 +190,7 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('載入失敗，請稍後再試');
+      throw new Error("載入失敗，請稍後再試");
     }
   }
 
@@ -209,7 +212,8 @@ export class VisualEditorApi {
    */
   static isValidBotId(botId: string): boolean {
     // UUID v4 格式驗證
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(botId);
   }
 
@@ -230,17 +234,20 @@ export class VisualEditorApi {
       return response.data || [];
     } catch (_error) {
       console.error("Error occurred:", _error);
-      throw new Error('取得邏輯模板列表失敗，請稍後再試');
+      throw new Error("取得邏輯模板列表失敗，請稍後再試");
     }
   }
 
   /**
    * 取得Bot邏輯模板摘要列表（用於下拉選單）
    */
-  static async getBotLogicTemplatesSummary(botId: string): Promise<LogicTemplateSummary[]> {
+  static async getBotLogicTemplatesSummary(
+    botId: string
+  ): Promise<LogicTemplateSummary[]> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/${botId}/logic-templates/summary`;
-      const response = await this.apiClient.get<LogicTemplateSummary[]>(endpoint);
+      const response =
+        await this.apiClient.get<LogicTemplateSummary[]>(endpoint);
 
       if (!response.success || response.status >= 400) {
         throw new Error(response.error || `API 錯誤 (${response.status})`);
@@ -249,32 +256,38 @@ export class VisualEditorApi {
       return response.data || [];
     } catch (_error) {
       console.error("Error occurred:", _error);
-      if (error instanceof Error && error.message.includes('404')) {
+      if (error instanceof Error && error.message.includes("404")) {
         return [];
       }
-      throw new Error('取得邏輯模板摘要列表失敗，請稍後再試');
+      throw new Error("取得邏輯模板摘要列表失敗，請稍後再試");
     }
   }
 
   /**
    * 創建邏輯模板
    */
-  static async createLogicTemplate(botId: string, data: Omit<LogicTemplateCreate, 'bot_id'>): Promise<LogicTemplate> {
+  static async createLogicTemplate(
+    botId: string,
+    data: Omit<LogicTemplateCreate, "bot_id">
+  ): Promise<LogicTemplate> {
     try {
       const payload: LogicTemplateCreate = {
         bot_id: botId,
-        ...data
+        ...data,
       };
 
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/${botId}/logic-templates`;
-      const response = await this.apiClient.post<LogicTemplate>(endpoint, payload);
+      const response = await this.apiClient.post<LogicTemplate>(
+        endpoint,
+        payload
+      );
 
       if (!response.success) {
-        throw new Error(response.error || '創建邏輯模板失敗');
+        throw new Error(response.error || "創建邏輯模板失敗");
       }
 
       if (!response.data) {
-        throw new Error('創建邏輯模板回應格式錯誤');
+        throw new Error("創建邏輯模板回應格式錯誤");
       }
 
       return response.data;
@@ -283,7 +296,7 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('創建邏輯模板失敗，請稍後再試');
+      throw new Error("創建邏輯模板失敗，請稍後再試");
     }
   }
 
@@ -296,11 +309,11 @@ export class VisualEditorApi {
       const response = await this.apiClient.get<LogicTemplate>(endpoint);
 
       if (!response.success) {
-        throw new Error(response.error || '取得邏輯模板失敗');
+        throw new Error(response.error || "取得邏輯模板失敗");
       }
 
       if (!response.data) {
-        throw new Error('邏輯模板不存在');
+        throw new Error("邏輯模板不存在");
       }
 
       return response.data;
@@ -309,24 +322,27 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('取得邏輯模板失敗，請稍後再試');
+      throw new Error("取得邏輯模板失敗，請稍後再試");
     }
   }
 
   /**
    * 更新邏輯模板
    */
-  static async updateLogicTemplate(templateId: string, data: LogicTemplateUpdate): Promise<LogicTemplate> {
+  static async updateLogicTemplate(
+    templateId: string,
+    data: LogicTemplateUpdate
+  ): Promise<LogicTemplate> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/logic-templates/${templateId}`;
       const response = await this.apiClient.put<LogicTemplate>(endpoint, data);
 
       if (!response.success) {
-        throw new Error(response.error || '更新邏輯模板失敗');
+        throw new Error(response.error || "更新邏輯模板失敗");
       }
 
       if (!response.data) {
-        throw new Error('更新邏輯模板回應格式錯誤');
+        throw new Error("更新邏輯模板回應格式錯誤");
       }
 
       return response.data;
@@ -335,7 +351,7 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('更新邏輯模板失敗，請稍後再試');
+      throw new Error("更新邏輯模板失敗，請稍後再試");
     }
   }
 
@@ -348,14 +364,14 @@ export class VisualEditorApi {
       const response = await this.apiClient.delete(endpoint);
 
       if (!response.success) {
-        throw new Error(response.error || '刪除邏輯模板失敗');
+        throw new Error(response.error || "刪除邏輯模板失敗");
       }
     } catch (_error) {
       console.error("Error occurred:", _error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('刪除邏輯模板失敗，請稍後再試');
+      throw new Error("刪除邏輯模板失敗，請稍後再試");
     }
   }
 
@@ -368,14 +384,14 @@ export class VisualEditorApi {
       const response = await this.apiClient.post(endpoint, {});
 
       if (!response.success) {
-        throw new Error(response.error || '激活邏輯模板失敗');
+        throw new Error(response.error || "激活邏輯模板失敗");
       }
     } catch (_error) {
       console.error("Error occurred:", _error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('激活邏輯模板失敗，請稍後再試');
+      throw new Error("激活邏輯模板失敗，請稍後再試");
     }
   }
 
@@ -387,32 +403,36 @@ export class VisualEditorApi {
   static async getUserFlexMessages(): Promise<FlexMessage[]> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/messages`;
-      
+
       // 確保使用認證的 API 呼叫
       const response = await this.apiClient.get<FlexMessage[]>(endpoint, false); // skipAuth = false
 
       if (!response.success || response.status >= 400) {
         const errorMsg = response.error || `API 錯誤 (${response.status})`;
-        console.error('API 錯誤詳情:', { status: response.status, error: response.error, endpoint });
+        console.error("API 錯誤詳情:", {
+          status: response.status,
+          error: response.error,
+          endpoint,
+        });
         throw new Error(errorMsg);
       }
 
       return response.data || [];
     } catch (_error) {
       console.error("Error occurred:", _error);
-      
+
       // 提供更詳細的錯誤資訊
       if (error instanceof Error) {
-        if (error.message.includes('400')) {
-          throw new Error('請求格式錯誤，請檢查認證狀態或重新登入');
-        } else if (error.message.includes('401')) {
-          throw new Error('認證失敗，請重新登入');
-        } else if (error.message.includes('403')) {
-          throw new Error('權限不足，無法存取此資源');
+        if (error.message.includes("400")) {
+          throw new Error("請求格式錯誤，請檢查認證狀態或重新登入");
+        } else if (error.message.includes("401")) {
+          throw new Error("認證失敗，請重新登入");
+        } else if (error.message.includes("403")) {
+          throw new Error("權限不足，無法存取此資源");
         }
       }
-      
-      throw new Error('取得FLEX訊息列表失敗，請稍後再試');
+
+      throw new Error("取得FLEX訊息列表失敗，請稍後再試");
     }
   }
 
@@ -431,27 +451,29 @@ export class VisualEditorApi {
       return response.data || [];
     } catch (_error) {
       console.error("Error occurred:", _error);
-      if (error instanceof Error && error.message.includes('404')) {
+      if (error instanceof Error && error.message.includes("404")) {
         return [];
       }
-      throw new Error('取得FLEX訊息摘要列表失敗，請稍後再試');
+      throw new Error("取得FLEX訊息摘要列表失敗，請稍後再試");
     }
   }
 
   /**
    * 創建FLEX訊息
    */
-  static async createFlexMessage(data: FlexMessageCreate): Promise<FlexMessage> {
+  static async createFlexMessage(
+    data: FlexMessageCreate
+  ): Promise<FlexMessage> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/messages`;
       const response = await this.apiClient.post<FlexMessage>(endpoint, data);
 
       if (!response.success) {
-        throw new Error(response.error || '創建FLEX訊息失敗');
+        throw new Error(response.error || "創建FLEX訊息失敗");
       }
 
       if (!response.data) {
-        throw new Error('創建FLEX訊息回應格式錯誤');
+        throw new Error("創建FLEX訊息回應格式錯誤");
       }
 
       return response.data;
@@ -460,24 +482,27 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('創建FLEX訊息失敗，請稍後再試');
+      throw new Error("創建FLEX訊息失敗，請稍後再試");
     }
   }
 
   /**
    * 更新FLEX訊息
    */
-  static async updateFlexMessage(messageId: string, data: FlexMessageUpdate): Promise<FlexMessage> {
+  static async updateFlexMessage(
+    messageId: string,
+    data: FlexMessageUpdate
+  ): Promise<FlexMessage> {
     try {
       const endpoint = `${API_CONFIG.UNIFIED.BASE_URL}/bots/messages/${messageId}`;
       const response = await this.apiClient.put<FlexMessage>(endpoint, data);
 
       if (!response.success) {
-        throw new Error(response.error || '更新FLEX訊息失敗');
+        throw new Error(response.error || "更新FLEX訊息失敗");
       }
 
       if (!response.data) {
-        throw new Error('更新FLEX訊息回應格式錯誤');
+        throw new Error("更新FLEX訊息回應格式錯誤");
       }
 
       return response.data;
@@ -486,7 +511,7 @@ export class VisualEditorApi {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('更新FLEX訊息失敗，請稍後再試');
+      throw new Error("更新FLEX訊息失敗，請稍後再試");
     }
   }
 
@@ -499,14 +524,14 @@ export class VisualEditorApi {
       const response = await this.apiClient.delete(endpoint);
 
       if (!response.success) {
-        throw new Error(response.error || '刪除FLEX訊息失敗');
+        throw new Error(response.error || "刪除FLEX訊息失敗");
       }
     } catch (_error) {
       console.error("Error occurred:", _error);
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('刪除FLEX訊息失敗，請稍後再試');
+      throw new Error("刪除FLEX訊息失敗，請稍後再試");
     }
   }
 }

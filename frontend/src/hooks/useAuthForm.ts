@@ -34,15 +34,15 @@ export const useAuthForm = (options: UseAuthFormOptions = {}) => {
     error: unknown,
     defaultMessage: string = "操作失敗，請重試"
   ) => {
-    const errorMessage = error instanceof Error ? error.message : defaultMessage;
-    
-    
+    const errorMessage =
+      error instanceof Error ? error.message : defaultMessage;
+
     toast({
       variant: "destructive",
       title: "錯誤",
       description: errorMessage,
     });
-    
+
     // 使用統一認證管理器清除認證信息
     authManager.clearAuth();
   };

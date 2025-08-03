@@ -3,32 +3,32 @@
  * 專為防止 XSS 攻擊而設計，僅使用 cookies 存儲認證資訊
  */
 
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 
 // Cookie 名稱常量
 export const COOKIE_NAMES = {
-  AUTH_TOKEN: 'auth_token',
-  AUTH_TOKEN_REMEMBER: 'auth_token_remember',
-  REFRESH_TOKEN: 'refresh_token',
-  USER_DATA: 'user_data',
-  TOKEN_TYPE: 'token_type'
+  AUTH_TOKEN: "auth_token",
+  AUTH_TOKEN_REMEMBER: "auth_token_remember",
+  REFRESH_TOKEN: "refresh_token",
+  USER_DATA: "user_data",
+  TOKEN_TYPE: "token_type",
 } as const;
 
 // Cookie 選項配置
 const COOKIE_OPTIONS = {
   // 會話 cookie（瀏覽器關閉時清除）
   session: {
-    path: '/',
-    sameSite: 'strict' as const,
-    secure: window.location.protocol === 'https:',
+    path: "/",
+    sameSite: "strict" as const,
+    secure: window.location.protocol === "https:",
   },
   // 記住我 cookie（7天有效期）
   remember: {
-    path: '/',
+    path: "/",
     expires: 7, // 7 天
-    sameSite: 'strict' as const,
-    secure: window.location.protocol === 'https:',
-  }
+    sameSite: "strict" as const,
+    secure: window.location.protocol === "https:",
+  },
 };
 
 /**
@@ -37,14 +37,22 @@ const COOKIE_OPTIONS = {
  * @param rememberMe - 是否記住我（7天 vs 會話）
  * @param tokenType - token 類型
  */
-export const setAuthToken = (token: string, rememberMe = false, tokenType = 'Bearer'): void => {
+export const setAuthToken = (
+  token: string,
+  rememberMe = false,
+  tokenType = "Bearer"
+): void => {
   try {
-    const cookieName = rememberMe ? COOKIE_NAMES.AUTH_TOKEN_REMEMBER : COOKIE_NAMES.AUTH_TOKEN;
-    const options = rememberMe ? COOKIE_OPTIONS.remember : COOKIE_OPTIONS.session;
+    const cookieName = rememberMe
+      ? COOKIE_NAMES.AUTH_TOKEN_REMEMBER
+      : COOKIE_NAMES.AUTH_TOKEN;
+    const options = rememberMe
+      ? COOKIE_OPTIONS.remember
+      : COOKIE_OPTIONS.session;
 
     // 設定 token cookie
     Cookies.set(cookieName, token, options);
-    
+
     // 設定 token 類型
     Cookies.set(COOKIE_NAMES.TOKEN_TYPE, tokenType, options);
 
@@ -55,10 +63,10 @@ export const setAuthToken = (token: string, rememberMe = false, tokenType = 'Bea
       Cookies.remove(COOKIE_NAMES.AUTH_TOKEN_REMEMBER);
     }
 
-    console.log(`Token 已設定為 ${rememberMe ? '記住我' : '會話'} cookie`);
+    console.log(`Token 已設定為 ${rememberMe ? "記住我" : "會話"} cookie`);
   } catch (_error) {
     console.error("Error occurred:", _error);
-    throw new Error('無法設定認證 cookie');
+    throw new Error("無法設定認證 cookie");
   }
 };
 
@@ -70,7 +78,7 @@ export const getAuthToken = (): string | null => {
   try {
     // 先檢查會話 cookie
     let token = Cookies.get(COOKIE_NAMES.AUTH_TOKEN);
-    
+
     // 如果會話 cookie 不存在，檢查記住我 cookie
     if (!token) {
       token = Cookies.get(COOKIE_NAMES.AUTH_TOKEN_REMEMBER);
@@ -88,10 +96,10 @@ export const getAuthToken = (): string | null => {
  */
 export const getTokenType = (): string => {
   try {
-    return Cookies.get(COOKIE_NAMES.TOKEN_TYPE) || 'Bearer';
+    return Cookies.get(COOKIE_NAMES.TOKEN_TYPE) || "Bearer";
   } catch (_error) {
     console.error("Error occurred:", _error);
-    return 'Bearer';
+    return "Bearer";
   }
 };
 
@@ -103,14 +111,14 @@ export const setRefreshToken = (refreshToken: string): void => {
   try {
     // refresh token 固定為 30 天過期
     const options = {
-      path: '/',
+      path: "/",
       expires: 30, // 30 天
-      sameSite: 'strict' as const,
-      secure: window.location.protocol === 'https:',
+      sameSite: "strict" as const,
+      secure: window.location.protocol === "https:",
     };
 
     Cookies.set(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, options);
-    console.log('Refresh token 已設定');
+    console.log("Refresh token 已設定");
   } catch (_error) {
     console.error("Error occurred:", _error);
   }
@@ -135,16 +143,22 @@ export const getRefreshToken = (): string | null => {
  */
 export const setUserData = (userData: object, rememberMe = false): void => {
   try {
-    const options = rememberMe ? COOKIE_OPTIONS.remember : COOKIE_OPTIONS.session;
+    const options = rememberMe
+      ? COOKIE_OPTIONS.remember
+      : COOKIE_OPTIONS.session;
     const dataWithTimestamp = {
       ...userData,
-      login_time: Date.now()
+      login_time: Date.now(),
     };
 
-    Cookies.set(COOKIE_NAMES.USER_DATA, JSON.stringify(dataWithTimestamp), options);
+    Cookies.set(
+      COOKIE_NAMES.USER_DATA,
+      JSON.stringify(dataWithTimestamp),
+      options
+    );
   } catch (_error) {
     console.error("Error occurred:", _error);
-    throw new Error('無法設定用戶資料 cookie');
+    throw new Error("無法設定用戶資料 cookie");
   }
 };
 
@@ -175,24 +189,30 @@ export const hasValidAuth = (): boolean => {
 export const clearAllAuthCookies = (): void => {
   try {
     // 清除所有認證相關的 cookies
-    Object.values(COOKIE_NAMES).forEach(cookieName => {
-      Cookies.remove(cookieName, { path: '/' });
+    Object.values(COOKIE_NAMES).forEach((cookieName) => {
+      Cookies.remove(cookieName, { path: "/" });
       // 確保在不同路徑下也清除
       Cookies.remove(cookieName);
     });
 
     // 清除可能存在的舊 cookies
     const oldCookieNames = [
-      'auth_token', 'line_token', 'token', 'refresh_token', 'user_data', 
-      'username', 'email', 'display_name'
+      "auth_token",
+      "line_token",
+      "token",
+      "refresh_token",
+      "user_data",
+      "username",
+      "email",
+      "display_name",
     ];
-    
-    oldCookieNames.forEach(name => {
-      Cookies.remove(name, { path: '/' });
+
+    oldCookieNames.forEach((name) => {
+      Cookies.remove(name, { path: "/" });
       Cookies.remove(name);
     });
 
-    console.log('所有認證 cookies 已清除');
+    console.log("所有認證 cookies 已清除");
   } catch (_error) {
     console.error("Error occurred:", _error);
   }
@@ -204,13 +224,13 @@ export const clearAllAuthCookies = (): void => {
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
   const tokenType = getTokenType();
-  
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
-    headers['Authorization'] = `${tokenType} ${token}`;
+    headers["Authorization"] = `${tokenType} ${token}`;
   }
 
   return headers;

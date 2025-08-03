@@ -3,8 +3,8 @@
  * 支援邏輯積木和 Flex 積木的混合代碼生成
  */
 
-import { UnifiedBlock, BlockCategory, WorkspaceContext } from '../types/block';
-import { migrateBlock } from './blockCompatibility';
+import { UnifiedBlock, BlockCategory } from "../types/block";
+import { migrateBlock } from "./blockCompatibility";
 
 // 向後相容的舊格式介面
 interface LegacyBlock {
@@ -22,30 +22,32 @@ export function generateUnifiedCode(
   // 轉換所有積木到統一格式
   const normalizedLogicBlocks = normalizeBlocks(logicBlocks);
   const normalizedFlexBlocks = normalizeBlocks(flexBlocks);
-  
+
   // 合併所有積木進行統一處理
   const allBlocks = [...normalizedLogicBlocks, ...normalizedFlexBlocks];
-  
+
   let code = generatePythonTemplate();
-  
+
   // 生成事件處理器
   code += generateEventHandlers(allBlocks);
-  
+
   // 生成 Flex 訊息定義
   code += generateFlexMessageDefinitions(normalizedFlexBlocks);
-  
+
   // 生成主程式碼
   code += generateMainCode();
-  
+
   return code;
 }
 
 /**
  * 轉換積木到統一格式
  */
-function normalizeBlocks(blocks: (UnifiedBlock | LegacyBlock)[]): UnifiedBlock[] {
-  return blocks.map(block => {
-    if ('category' in block) {
+function normalizeBlocks(
+  blocks: (UnifiedBlock | LegacyBlock)[]
+): UnifiedBlock[] {
+  return blocks.map((block) => {
+    if ("category" in block) {
       return block as UnifiedBlock;
     } else {
       return migrateBlock(block as LegacyBlock);
@@ -90,62 +92,72 @@ def callback():
  * 生成事件處理器
  */
 function generateEventHandlers(blocks: UnifiedBlock[]): string {
-  let code = '';
-  
-  const eventBlocks = blocks.filter(block => block.category === BlockCategory.EVENT);
-  const replyBlocks = blocks.filter(block => block.category === BlockCategory.REPLY);
-  const controlBlocks = blocks.filter(block => block.category === BlockCategory.CONTROL);
-  
+  let code = "";
+
+  const eventBlocks = blocks.filter(
+    (block) => block.category === BlockCategory.EVENT
+  );
+  const replyBlocks = blocks.filter(
+    (block) => block.category === BlockCategory.REPLY
+  );
+  const controlBlocks = blocks.filter(
+    (block) => block.category === BlockCategory.CONTROL
+  );
+
   // 為每個事件積木生成處理器
   eventBlocks.forEach((eventBlock, index) => {
     const _eventType = eventBlock.blockData.eventType as string;
-    
+
     code += `@handler.add(MessageEvent, message=TextMessage)
 def handle_message_${index}(event):
     user_message = event.message.text
     reply_messages = []
     
 `;
-    
+
     // 查找相關的回覆積木
-    replyBlocks.forEach(replyBlock => {
+    replyBlocks.forEach((replyBlock) => {
       code += generateReplyCode(replyBlock, blocks);
     });
-    
+
     // 處理控制邏輯
-    controlBlocks.forEach(controlBlock => {
+    controlBlocks.forEach((controlBlock) => {
       code += generateControlCode(controlBlock);
     });
-    
+
     code += `    
     if reply_messages:
         line_bot_api.reply_message(event.reply_token, reply_messages)
 
 `;
   });
-  
+
   return code;
 }
 
 /**
  * 生成回覆積木代碼
  */
-function generateReplyCode(replyBlock: UnifiedBlock, allBlocks: UnifiedBlock[]): string {
+function generateReplyCode(
+  replyBlock: UnifiedBlock,
+  allBlocks: UnifiedBlock[]
+): string {
   const replyType = replyBlock.blockData.replyType as string;
-  
+
   switch (replyType) {
-    case 'text':
-      return `    reply_messages.append(TextSendMessage(text="${replyBlock.blockData.title || '回覆訊息'}"))
+    case "text":
+      return `    reply_messages.append(TextSendMessage(text="${replyBlock.blockData.title || "回覆訊息"}"))
 `;
-    
-    case 'flex': {
+
+    case "flex": {
       // 查找相關的 Flex 積木
-      const flexBlocks = allBlocks.filter(block => 
-        block.category === BlockCategory.FLEX_CONTAINER ||
-        block.category === BlockCategory.FLEX_CONTENT ||
-        block.category === BlockCategory.FLEX_LAYOUT
+      const flexBlocks = allBlocks.filter(
+        (block) =>
+          block.category === BlockCategory.FLEX_CONTAINER ||
+          block.category === BlockCategory.FLEX_CONTENT ||
+          block.category === BlockCategory.FLEX_LAYOUT
       );
-      
+
       if (flexBlocks.length > 0) {
         return `    reply_messages.append(FlexSendMessage(alt_text="Flex 訊息", contents=flex_message_${Date.now()}))
 `;
@@ -153,14 +165,14 @@ function generateReplyCode(replyBlock: UnifiedBlock, allBlocks: UnifiedBlock[]):
       return `    reply_messages.append(TextSendMessage(text="Flex 訊息功能尚未完整設定"))
 `;
     }
-    
-    case 'image':
+
+    case "image":
       return `    reply_messages.append(ImageSendMessage(
         original_content_url="https://example.com/image.jpg",
         preview_image_url="https://example.com/preview.jpg"
     ))
 `;
-    
+
     default:
       return `    reply_messages.append(TextSendMessage(text="未支援的回覆類型"))
 `;
@@ -172,9 +184,9 @@ function generateReplyCode(replyBlock: UnifiedBlock, allBlocks: UnifiedBlock[]):
  */
 function generateControlCode(controlBlock: UnifiedBlock): string {
   const controlType = controlBlock.blockData.controlType as string;
-  
+
   switch (controlType) {
-    case 'if':
+    case "if":
       return `    # 條件判斷邏輯
     if user_message == "條件":
         # 條件為真時的處理
@@ -183,20 +195,20 @@ function generateControlCode(controlBlock: UnifiedBlock): string {
         # 條件為假時的處理
         pass
 `;
-    
-    case 'loop':
+
+    case "loop":
       return `    # 迴圈處理邏輯
     for i in range(3):
         # 重複執行的邏輯
         pass
 `;
-    
-    case 'wait':
+
+    case "wait":
       return `    # 等待處理邏輯
     import time
     time.sleep(1)
 `;
-    
+
     default:
       return `    # 未知的控制類型: ${controlType}
 `;
@@ -208,48 +220,52 @@ function generateControlCode(controlBlock: UnifiedBlock): string {
  */
 function generateFlexMessageDefinitions(flexBlocks: UnifiedBlock[]): string {
   if (flexBlocks.length === 0) {
-    return '';
+    return "";
   }
-  
-  let code = '# Flex 訊息定義\n';
-  
-  const containerBlocks = flexBlocks.filter(block => block.category === BlockCategory.FLEX_CONTAINER);
-  const contentBlocks = flexBlocks.filter(block => block.category === BlockCategory.FLEX_CONTENT);
-  
+
+  let code = "# Flex 訊息定義\n";
+
+  const containerBlocks = flexBlocks.filter(
+    (block) => block.category === BlockCategory.FLEX_CONTAINER
+  );
+  const contentBlocks = flexBlocks.filter(
+    (block) => block.category === BlockCategory.FLEX_CONTENT
+  );
+
   containerBlocks.forEach((container, index) => {
     const containerType = container.blockData.containerType as string;
-    
+
     code += `
 def flex_message_${Date.now() + index}():
     return {
         "type": "${containerType}",
 `;
-    
-    if (containerType === 'bubble') {
+
+    if (containerType === "bubble") {
       code += `        "body": {
             "type": "box",
             "layout": "vertical",
             "contents": [
 `;
-      
+
       // 添加內容積木
-      contentBlocks.forEach(content => {
+      contentBlocks.forEach((content) => {
         const contentType = content.blockData.contentType as string;
-        
+
         switch (contentType) {
-          case 'text':
+          case "text":
             code += `                {
                     "type": "text",
-                    "text": "${content.blockData.title || '文字內容'}"
+                    "text": "${content.blockData.title || "文字內容"}"
                 },
 `;
             break;
-          case 'button':
+          case "button":
             code += `                {
                     "type": "button",
                     "action": {
                         "type": "postback",
-                        "label": "${content.blockData.title || '按鈕'}",
+                        "label": "${content.blockData.title || "按鈕"}",
                         "data": "button_clicked"
                     }
                 },
@@ -257,17 +273,17 @@ def flex_message_${Date.now() + index}():
             break;
         }
       });
-      
+
       code += `            ]
         }
 `;
     }
-    
+
     code += `    }
 
 `;
   });
-  
+
   return code;
 }
 
@@ -284,12 +300,18 @@ if __name__ == "__main__":
 /**
  * 生成 Flex 訊息預覽 JSON
  */
-export function generateFlexPreview(flexBlocks: (UnifiedBlock | LegacyBlock)[]): object {
+export function generateFlexPreview(
+  flexBlocks: (UnifiedBlock | LegacyBlock)[]
+): object {
   const normalizedBlocks = normalizeBlocks(flexBlocks);
-  
-  const containerBlocks = normalizedBlocks.filter(block => block.category === BlockCategory.FLEX_CONTAINER);
-  const contentBlocks = normalizedBlocks.filter(block => block.category === BlockCategory.FLEX_CONTENT);
-  
+
+  const containerBlocks = normalizedBlocks.filter(
+    (block) => block.category === BlockCategory.FLEX_CONTAINER
+  );
+  const contentBlocks = normalizedBlocks.filter(
+    (block) => block.category === BlockCategory.FLEX_CONTENT
+  );
+
   if (containerBlocks.length === 0) {
     return {
       type: "bubble",
@@ -299,57 +321,57 @@ export function generateFlexPreview(flexBlocks: (UnifiedBlock | LegacyBlock)[]):
         contents: [
           {
             type: "text",
-            text: "請添加 Flex 容器積木"
-          }
-        ]
-      }
+            text: "請添加 Flex 容器積木",
+          },
+        ],
+      },
     };
   }
-  
+
   const container = containerBlocks[0];
   const containerType = container.blockData.containerType as string;
-  
+
   const flexMessage: Record<string, unknown> = {
-    type: containerType
+    type: containerType,
   };
-  
-  if (containerType === 'bubble') {
+
+  if (containerType === "bubble") {
     flexMessage.body = {
       type: "box",
       layout: "vertical",
-      contents: contentBlocks.map(content => {
+      contents: contentBlocks.map((content) => {
         const contentType = content.blockData.contentType as string;
-        
+
         switch (contentType) {
-          case 'text':
+          case "text":
             return {
               type: "text",
-              text: content.blockData.title || '文字內容'
+              text: content.blockData.title || "文字內容",
             };
-          case 'button':
+          case "button":
             return {
               type: "button",
               action: {
                 type: "postback",
-                label: content.blockData.title || '按鈕',
-                data: "button_clicked"
-              }
+                label: content.blockData.title || "按鈕",
+                data: "button_clicked",
+              },
             };
-          case 'image':
+          case "image":
             return {
               type: "image",
               url: "https://via.placeholder.com/300x200",
-              aspectMode: "cover"
+              aspectMode: "cover",
             };
           default:
             return {
               type: "text",
-              text: `未支援的內容類型: ${contentType}`
+              text: `未支援的內容類型: ${contentType}`,
             };
         }
-      })
+      }),
     };
   }
-  
+
   return flexMessage;
 }

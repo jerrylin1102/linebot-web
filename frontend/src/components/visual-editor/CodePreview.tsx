@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Copy, Download } from 'lucide-react';
-import LineBotCodeGenerator from '../../utils/codeGenerator';
+import React, { useState, useEffect } from "react";
+import { Button } from "../ui/button";
+import { Copy, Download } from "lucide-react";
+import LineBotCodeGenerator from "../../utils/codeGenerator";
 
 interface BlockData {
   [key: string]: unknown;
@@ -17,7 +17,7 @@ interface CodePreviewProps {
 }
 
 const CodePreview: React.FC<CodePreviewProps> = ({ blocks }) => {
-  const [generatedCode, setGeneratedCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState("");
   const [codeGenerator] = useState(new LineBotCodeGenerator());
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const CodePreview: React.FC<CodePreviewProps> = ({ blocks }) => {
       const code = codeGenerator.generateCode(blocks);
       setGeneratedCode(code);
     } else {
-      setGeneratedCode('# 請先在邏輯編輯器中加入積木來生成程式碼');
+      setGeneratedCode("# 請先在邏輯編輯器中加入積木來生成程式碼");
     }
   }, [blocks, codeGenerator]);
 
@@ -35,11 +35,11 @@ const CodePreview: React.FC<CodePreviewProps> = ({ blocks }) => {
   };
 
   const downloadCode = () => {
-    const blob = new Blob([generatedCode], { type: 'text/plain' });
+    const blob = new Blob([generatedCode], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'linebot.py';
+    a.download = "linebot.py";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -61,15 +61,18 @@ const CodePreview: React.FC<CodePreviewProps> = ({ blocks }) => {
           </Button>
         </div>
       </div>
-      
+
       <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-auto">
         <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap">
           {generatedCode}
         </pre>
       </div>
-      
+
       <div className="mt-4 text-sm text-gray-500">
-        <p>💡 提示：請記得將 YOUR_CHANNEL_ACCESS_TOKEN 和 YOUR_CHANNEL_SECRET 替換為您的 LINE Bot 憑證</p>
+        <p>
+          💡 提示：請記得將 YOUR_CHANNEL_ACCESS_TOKEN 和 YOUR_CHANNEL_SECRET
+          替換為您的 LINE Bot 憑證
+        </p>
       </div>
     </div>
   );

@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Download, Upload, Save, Play, Loader2 } from 'lucide-react';
-import { useToast } from '../../hooks/use-toast';
-import VisualEditorApi, { BotSummary } from '../../services/visualEditorApi';
-import { generateUnifiedCode } from '../../utils/unifiedCodeGenerator';
+import React, { useState, useEffect, useCallback } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Download, Upload, Save, Play, Loader2 } from "lucide-react";
+import { useToast } from "../../hooks/use-toast";
+import VisualEditorApi, { BotSummary } from "../../services/visualEditorApi";
+import { generateUnifiedCode } from "../../utils/unifiedCodeGenerator";
 
 interface BlockData {
   [key: string]: unknown;
@@ -35,18 +41,21 @@ interface ProjectManagerProps {
   onImport?: (projectData: ProjectData) => void;
   selectedBotId?: string;
   onBotSelect?: (botId: string) => void;
-  onSaveToBot?: (botId: string, data: { logicBlocks: Block[], flexBlocks: Block[], generatedCode: string }) => void;
+  onSaveToBot?: (
+    botId: string,
+    data: { logicBlocks: Block[]; flexBlocks: Block[]; generatedCode: string }
+  ) => void;
 }
 
-const ProjectManager: React.FC<ProjectManagerProps> = ({ 
-  logicBlocks, 
-  flexBlocks, 
+const ProjectManager: React.FC<ProjectManagerProps> = ({
+  logicBlocks,
+  flexBlocks,
   onImport,
   selectedBotId,
   onBotSelect,
-  onSaveToBot
+  onSaveToBot,
 }) => {
-  const [projectName, setProjectName] = useState('我的 LINE Bot 專案');
+  const [projectName, setProjectName] = useState("我的 LINE Bot 專案");
   const [bots, setBots] = useState<BotSummary[]>([]);
   const [isLoadingBots, setIsLoadingBots] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,21 +64,23 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const exportProject = () => {
     const projectData: ProjectData = {
       name: projectName,
-      version: '1.0.0',
+      version: "1.0.0",
       createdAt: new Date().toISOString(),
       logicBlocks: logicBlocks,
       flexBlocks: flexBlocks,
       metadata: {
-        description: '使用 LINE Bot 視覺化編輯器建立的專案',
-        author: 'LINE Bot Visual Editor'
-      }
+        description: "使用 LINE Bot 視覺化編輯器建立的專案",
+        author: "LINE Bot Visual Editor",
+      },
     };
 
-    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(projectData, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `${projectName.replace(/\s+/g, '_')}.json`;
+    a.download = `${projectName.replace(/\s+/g, "_")}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -77,9 +88,9 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   };
 
   const importProject = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
     input.onchange = (e) => {
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
@@ -90,15 +101,15 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
             const result = e.target?.result as string;
             const projectData = JSON.parse(result) as ProjectData;
             if (projectData.logicBlocks && projectData.flexBlocks) {
-              setProjectName(projectData.name || '匯入的專案');
+              setProjectName(projectData.name || "匯入的專案");
               if (onImport) {
                 onImport(projectData);
               }
             } else {
-              alert('無效的專案檔案格式');
+              alert("無效的專案檔案格式");
             }
           } catch (error) {
-            alert('檔案讀取失敗：' + (error as Error).message);
+            alert("檔案讀取失敗：" + (error as Error).message);
           }
         };
         reader.readAsText(file);
@@ -113,21 +124,21 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     try {
       const botsList = await VisualEditorApi.getUserBotsSummary();
       setBots(botsList);
-      
+
       // 如果沒有 Bot，顯示提示訊息
       if (botsList.length === 0) {
         toast({
-          title: '温馨提示',
-          description: '目前沒有可用的 Bot，請先到 Bot 管理頁面建立 Bot'
+          title: "温馨提示",
+          description: "目前沒有可用的 Bot，請先到 Bot 管理頁面建立 Bot",
         });
       }
     } catch (err) {
       // 只有在真正的錯誤時才顯示錯誤訊息
-      console.warn('載入 Bot 列表時發生問題:', err);
+      console.warn("載入 Bot 列表時發生問題:", err);
       toast({
-        variant: 'destructive',
-        title: '載入失敗',
-        description: '載入 Bot 列表失敗，請確保後端服務正在運行'
+        variant: "destructive",
+        title: "載入失敗",
+        description: "載入 Bot 列表失敗，請確保後端服務正在運行",
       });
     } finally {
       setIsLoadingBots(false);
@@ -138,9 +149,9 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const saveProject = async () => {
     if (!selectedBotId) {
       toast({
-        variant: 'destructive',
-        title: '儲存失敗',
-        description: '請先選擇一個 Bot'
+        variant: "destructive",
+        title: "儲存失敗",
+        description: "請先選擇一個 Bot",
       });
       return;
     }
@@ -150,25 +161,25 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     try {
       // 生成程式碼
       const generatedCode = generateUnifiedCode(logicBlocks, flexBlocks);
-      
+
       // 呼叫父組件的儲存函數
       if (onSaveToBot) {
         await onSaveToBot(selectedBotId, {
           logicBlocks,
           flexBlocks,
-          generatedCode
+          generatedCode,
         });
       }
 
       toast({
-        title: '儲存成功',
-        description: '專案已成功儲存到資料庫'
+        title: "儲存成功",
+        description: "專案已成功儲存到資料庫",
       });
     } catch (err) {
       toast({
-        variant: 'destructive',
-        title: '儲存失敗',
-        description: err instanceof Error ? err.message : '儲存失敗'
+        variant: "destructive",
+        title: "儲存失敗",
+        description: err instanceof Error ? err.message : "儲存失敗",
       });
     } finally {
       setIsSaving(false);
@@ -177,7 +188,9 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   const testBot = () => {
     // 切換到預覽標籤
-    const previewTab = document.querySelector('[value="preview"]') as HTMLElement;
+    const previewTab = document.querySelector(
+      '[value="preview"]'
+    ) as HTMLElement;
     if (previewTab) {
       previewTab.click();
     }
@@ -188,27 +201,30 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     loadBots();
   }, [loadBots]);
 
-
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
         {/* Bot 選擇器 */}
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">選擇 Bot:</span>
-          <Select 
-            value={selectedBotId} 
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            選擇 Bot:
+          </span>
+          <Select
+            value={selectedBotId}
             onValueChange={(value) => {
-              if (value !== 'no-bots' && onBotSelect) {
+              if (value !== "no-bots" && onBotSelect) {
                 onBotSelect(value);
               }
             }}
             disabled={isLoadingBots}
           >
             <SelectTrigger className="w-48">
-              <SelectValue placeholder={isLoadingBots ? "載入中..." : "選擇一個 Bot"} />
+              <SelectValue
+                placeholder={isLoadingBots ? "載入中..." : "選擇一個 Bot"}
+              />
             </SelectTrigger>
             <SelectContent>
-              {bots.map(bot => (
+              {bots.map((bot) => (
                 <SelectItem key={bot.id} value={bot.id}>
                   {bot.name}
                 </SelectItem>
@@ -225,7 +241,9 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
         {/* 專案名稱（保留用於本地儲存） */}
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">專案名稱:</span>
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            專案名稱:
+          </span>
           <Input
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
@@ -233,21 +251,21 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
             placeholder="專案名稱"
           />
         </div>
-      
+
         <Button variant="outline" size="sm" onClick={importProject}>
           <Upload className="w-4 h-4 mr-2" />
           匯入
         </Button>
-        
+
         <Button variant="outline" size="sm" onClick={exportProject}>
           <Download className="w-4 h-4 mr-2" />
           匯出
         </Button>
-        
+
         {/* 儲存按鈕 */}
-        <Button 
-          variant="default" 
-          size="sm" 
+        <Button
+          variant="default"
+          size="sm"
           onClick={saveProject}
           disabled={!selectedBotId || isSaving}
         >
@@ -256,9 +274,9 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}
-          {isSaving ? '儲存中...' : '儲存'}
+          {isSaving ? "儲存中..." : "儲存"}
         </Button>
-        
+
         <Button variant="default" size="sm" onClick={testBot}>
           <Play className="w-4 h-4 mr-2" />
           測試

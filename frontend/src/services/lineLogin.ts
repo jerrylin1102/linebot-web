@@ -26,27 +26,27 @@ export class LineLoginService {
   public async getLoginUrl(): Promise<LineLoginResponse> {
     try {
       const url = `${API_CONFIG.LINE_LOGIN.BASE_URL}${API_CONFIG.LINE_LOGIN.ENDPOINTS.LINE_LOGIN}`;
-      console.log('正在請求 LINE 登入 URL:', url);
-      
+      console.log("正在請求 LINE 登入 URL:", url);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        credentials: 'include'
+        credentials: "include",
       });
 
-      console.log('回應狀態:', response.status);
-      
+      console.log("回應狀態:", response.status);
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('回應錯誤:', errorText);
+        console.error("回應錯誤:", errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('回應資料:', data);
+      console.log("回應資料:", data);
 
       if (data.error) {
         throw new Error(data.error);

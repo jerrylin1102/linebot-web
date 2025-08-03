@@ -49,9 +49,9 @@ export class LineBotCodeGenerator {
 
   generateCode(blocks: Block[]): string {
     this.reset();
-    
+
     // 分析積木並生成對應的程式碼
-    blocks.forEach(block => {
+    blocks.forEach((block) => {
       this.processBlock(block);
     });
 
@@ -62,26 +62,28 @@ export class LineBotCodeGenerator {
     this.imports.clear();
     this.eventHandlers = [];
     this.variables.clear();
-    
+
     // 基本的 imports
     this.imports.add("from flask import Flask, request, abort");
     this.imports.add("from linebot import LineBotApi, WebhookHandler");
     this.imports.add("from linebot.exceptions import InvalidSignatureError");
-    this.imports.add("from linebot.models import MessageEvent, TextMessage, TextSendMessage");
+    this.imports.add(
+      "from linebot.models import MessageEvent, TextMessage, TextSendMessage"
+    );
   }
 
   private processBlock(block: Block): void {
     switch (block.blockType) {
-      case 'event':
+      case "event":
         this.processEventBlock(block);
         break;
-      case 'reply':
+      case "reply":
         this.processReplyBlock(block);
         break;
-      case 'control':
+      case "control":
         this.processControlBlock(block);
         break;
-      case 'setting':
+      case "setting":
         this.processSettingBlock(block);
         break;
     }
@@ -89,38 +91,38 @@ export class LineBotCodeGenerator {
 
   private processEventBlock(block: Block): void {
     const { eventType, condition } = block.blockData;
-    
+
     switch (eventType) {
-      case 'message.text':
+      case "message.text":
         this.eventHandlers.push({
-          type: 'message',
-          messageType: 'text',
-          condition: condition || '',
-          actions: []
+          type: "message",
+          messageType: "text",
+          condition: condition || "",
+          actions: [],
         });
         break;
-      case 'message.image':
+      case "message.image":
         this.imports.add("from linebot.models import ImageMessage");
         this.eventHandlers.push({
-          type: 'message',
-          messageType: 'image',
-          condition: condition || '',
-          actions: []
+          type: "message",
+          messageType: "image",
+          condition: condition || "",
+          actions: [],
         });
         break;
-      case 'follow':
+      case "follow":
         this.imports.add("from linebot.models import FollowEvent");
         this.eventHandlers.push({
-          type: 'follow',
-          actions: []
+          type: "follow",
+          actions: [],
         });
         break;
-      case 'postback':
+      case "postback":
         this.imports.add("from linebot.models import PostbackEvent");
         this.eventHandlers.push({
-          type: 'postback',
-          condition: condition || '',
-          actions: []
+          type: "postback",
+          condition: condition || "",
+          actions: [],
         });
         break;
     }
@@ -128,40 +130,40 @@ export class LineBotCodeGenerator {
 
   private processReplyBlock(block: Block): void {
     const { replyType, content } = block.blockData;
-    
+
     // 將回覆動作加入到最後一個事件處理器
     if (this.eventHandlers.length > 0) {
       const lastHandler = this.eventHandlers[this.eventHandlers.length - 1];
-      
+
       switch (replyType) {
-        case 'text':
+        case "text":
           lastHandler.actions.push({
-            type: 'reply_text',
-            content: content || '預設回覆訊息'
+            type: "reply_text",
+            content: content || "預設回覆訊息",
           });
           break;
-        case 'image':
+        case "image":
           this.imports.add("from linebot.models import ImageSendMessage");
           lastHandler.actions.push({
-            type: 'reply_image',
-            originalContentUrl: content || 'https://example.com/image.jpg',
-            previewImageUrl: content || 'https://example.com/image.jpg'
+            type: "reply_image",
+            originalContentUrl: content || "https://example.com/image.jpg",
+            previewImageUrl: content || "https://example.com/image.jpg",
           });
           break;
-        case 'flex':
+        case "flex":
           this.imports.add("from linebot.models import FlexSendMessage");
           lastHandler.actions.push({
-            type: 'reply_flex',
-            altText: 'Flex Message',
-            contents: content || {}
+            type: "reply_flex",
+            altText: "Flex Message",
+            contents: content || {},
           });
           break;
-        case 'sticker':
+        case "sticker":
           this.imports.add("from linebot.models import StickerSendMessage");
           lastHandler.actions.push({
-            type: 'reply_sticker',
-            packageId: '1',
-            stickerId: '1'
+            type: "reply_sticker",
+            packageId: "1",
+            stickerId: "1",
           });
           break;
       }
@@ -170,39 +172,39 @@ export class LineBotCodeGenerator {
 
   private processControlBlock(block: Block): void {
     const { controlType } = block.blockData;
-    
+
     // 控制邏輯的處理（簡化版本）
     if (this.eventHandlers.length > 0) {
       const lastHandler = this.eventHandlers[this.eventHandlers.length - 1];
       lastHandler.actions.push({
-        type: 'control',
-        controlType: controlType
+        type: "control",
+        controlType: controlType,
       });
     }
   }
 
   private processSettingBlock(block: Block): void {
     const { settingType, variableName, value } = block.blockData;
-    
+
     switch (settingType) {
-      case 'setVariable':
-        this.variables.set(variableName || 'variable', value || '');
+      case "setVariable":
+        this.variables.set(variableName || "variable", value || "");
         break;
-      case 'getVariable':
+      case "getVariable":
         // 變數取得邏輯
         break;
-      case 'saveUserData':
+      case "saveUserData":
         // 用戶資料儲存邏輯
         break;
     }
   }
 
   private buildFinalCode(): string {
-    let code = '';
-    
+    let code = "";
+
     // 加入 imports
-    code += Array.from(this.imports).join('\n') + '\n\n';
-    
+    code += Array.from(this.imports).join("\n") + "\n\n";
+
     // 加入基本設定
     code += `app = Flask(__name__)
 
@@ -225,8 +227,8 @@ def callback():
 `;
 
     // 生成事件處理器
-    this.eventHandlers.forEach(handler => {
-      code += this.generateEventHandler(handler) + '\n';
+    this.eventHandlers.forEach((handler) => {
+      code += this.generateEventHandler(handler) + "\n";
     });
 
     // 加入主程式
@@ -239,11 +241,11 @@ if __name__ == "__main__":
   }
 
   private generateEventHandler(handler: EventHandler): string {
-    let code = '';
-    
+    let code = "";
+
     switch (handler.type) {
-      case 'message':
-        if (handler.messageType === 'text') {
+      case "message":
+        if (handler.messageType === "text") {
           code += `@handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     user_message = event.message.text
@@ -253,20 +255,20 @@ def handle_text_message(event):
     if "${handler.condition}" in user_message:
         `;
           }
-        } else if (handler.messageType === 'image') {
+        } else if (handler.messageType === "image") {
           code += `@handler.add(MessageEvent, message=ImageMessage)
 def handle_image_message(event):
     `;
         }
         break;
-      
-      case 'follow':
+
+      case "follow":
         code += `@handler.add(FollowEvent)
 def handle_follow(event):
     `;
         break;
-      
-      case 'postback':
+
+      case "postback":
         code += `@handler.add(PostbackEvent)
 def handle_postback(event):
     `;
@@ -279,7 +281,7 @@ def handle_postback(event):
     }
 
     // 加入動作
-    handler.actions.forEach(action => {
+    handler.actions.forEach((action) => {
       code += this.generateAction(action);
     });
 
@@ -287,10 +289,10 @@ def handle_postback(event):
   }
 
   private generateAction(action: Action): string {
-    let code = '';
-    
+    let code = "";
+
     switch (action.type) {
-      case 'reply_text':
+      case "reply_text":
         code += `
     line_bot_api.reply_message(
         event.reply_token,
@@ -298,8 +300,8 @@ def handle_postback(event):
     )
 `;
         break;
-      
-      case 'reply_image':
+
+      case "reply_image":
         code += `
     line_bot_api.reply_message(
         event.reply_token,
@@ -310,8 +312,8 @@ def handle_postback(event):
     )
 `;
         break;
-      
-      case 'reply_flex':
+
+      case "reply_flex":
         code += `
     line_bot_api.reply_message(
         event.reply_token,
@@ -322,8 +324,8 @@ def handle_postback(event):
     )
 `;
         break;
-      
-      case 'reply_sticker':
+
+      case "reply_sticker":
         code += `
     line_bot_api.reply_message(
         event.reply_token,
@@ -335,7 +337,7 @@ def handle_postback(event):
 `;
         break;
     }
-    
+
     return code;
   }
 }

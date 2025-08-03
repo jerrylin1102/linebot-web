@@ -197,7 +197,6 @@ export const useAuthentication = (options: UseAuthenticationOptions = {}) => {
     }
   };
 
-
   const logout = () => {
     AuthService.clearToken();
     localStorage.clear();

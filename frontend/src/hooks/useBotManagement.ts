@@ -25,7 +25,6 @@ export const useBotManagement = (): UseBotManagementReturn => {
   const checkAuth = useCallback(async () => {
     const isAuthenticated = await authManager.isAuthenticated();
     if (!isAuthenticated) {
-      
       navigate("/login", {
         state: {
           from: window.location.pathname,
@@ -47,21 +46,20 @@ export const useBotManagement = (): UseBotManagementReturn => {
 
       try {
         const response = await apiClient.createBot(botData);
-        
+
         if (response.error) {
           throw new Error(response.error);
         }
 
         const newBot = response.data as Bot;
-        
 
         // 更新本地 bot 列表
         setBots((prevBots) => [...prevBots, newBot]);
         return newBot;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "創建 Bot 失敗";
+        const errorMessage =
+          err instanceof Error ? err.message : "創建 Bot 失敗";
         setError(errorMessage);
-
 
         // 統一認證管理器會自動處理401錯誤
         authManager.handleAuthError(err);

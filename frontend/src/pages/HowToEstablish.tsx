@@ -7,7 +7,7 @@ import DashboardNavbar from "../components/layout/DashboardNavbar";
 import DashboardFooter from "../components/layout/DashboardFooter";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { API_CONFIG, getApiUrl } from "../config/apiConfig";
-import { /* ChevronRight, CheckCircle, Circle */ } from "lucide-react";
+import {} from /* ChevronRight, CheckCircle, Circle */ "lucide-react";
 import { useUnifiedAuth } from "../hooks/useUnifiedAuth";
 
 interface User {
@@ -26,7 +26,11 @@ const HowToEstablish = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   // 使用統一身份驗證Hook
-  const { user: _authUser, loading: _authLoading, error: _authError } = useUnifiedAuth({
+  const {
+    user: _authUser,
+    loading: _authLoading,
+    error: _authError,
+  } = useUnifiedAuth({
     requireAuth: true,
     redirectTo: "/login",
   });
@@ -106,7 +110,7 @@ const HowToEstablish = () => {
       navigate("/login");
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, nativeFetch]);
 
   useEffect(() => {
     const token = searchParams.get("token");

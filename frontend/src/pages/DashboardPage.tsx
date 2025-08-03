@@ -24,23 +24,21 @@ const DashboardPage = memo(() => {
   // 使用統一認證Hook，具備自動保護功能
   const { user, loading, error, handleLineLogin } = useUnifiedAuth({
     requireAuth: true,
-    redirectTo: "/login"
+    redirectTo: "/login",
   });
-
 
   // 處理LINE登入回調
   useEffect(() => {
     const token = searchParams.get("token");
     const displayName = searchParams.get("display_name");
-    
+
     if (token && displayName) {
       handleLineLogin(token).then(() => {
         // 清理URL參數
-        navigate('/dashboard', { replace: true });
+        navigate("/dashboard", { replace: true });
       });
     }
   }, [searchParams, handleLineLogin, navigate]);
-
 
   // 處理錯誤狀態顯示
   if (error) {
@@ -68,13 +66,12 @@ const DashboardPage = memo(() => {
       <DashboardNavbar user={user} />
       <div className="mt-40 mb-20">
         <HomeBotfly user={user} />
-        
       </div>
       <DashboardFooter />
     </div>
   );
 });
 
-DashboardPage.displayName = 'DashboardPage';
+DashboardPage.displayName = "DashboardPage";
 
 export default DashboardPage;

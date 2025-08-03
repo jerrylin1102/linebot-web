@@ -4,7 +4,7 @@
  * 移除時間: 2025-09-20
  */
 
-console.warn('⚠️ api.ts 已廢棄，請遷移到 UnifiedApiClient');
+console.warn("⚠️ api.ts 已廢棄，請遷移到 UnifiedApiClient");
 
 import { AuthService } from "./auth";
 import { API_CONFIG } from "../config/apiConfig";
@@ -287,7 +287,7 @@ export class ApiClient {
   async uploadAvatar(formData: FormData): Promise<ApiResponse> {
     try {
       // 從 FormData 中獲取文件並轉換為 base64
-      const file = formData.get('avatar') as File;
+      const file = formData.get("avatar") as File;
       if (!file) {
         return {
           error: "未找到頭像文件",
@@ -297,7 +297,7 @@ export class ApiClient {
 
       // 將文件轉換為 base64 data URL
       const base64 = await this.fileToBase64(file);
-      
+
       // 使用 JSON 格式發送數據
       return this.put(
         `${API_CONFIG.SETTING.BASE_URL}${API_CONFIG.SETTING.ENDPOINTS.UPDATE_AVATAR}`,
@@ -331,7 +331,10 @@ export class ApiClient {
   }
 
   // 修改密碼
-  async changePassword(oldPassword: string, newPassword: string): Promise<ApiResponse> {
+  async changePassword(
+    oldPassword: string,
+    newPassword: string
+  ): Promise<ApiResponse> {
     return this.post(
       `${API_CONFIG.SETTING.BASE_URL}${API_CONFIG.SETTING.ENDPOINTS.CHANGE_PASSWORD}`,
       {

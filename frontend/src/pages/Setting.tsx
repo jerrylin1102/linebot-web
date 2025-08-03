@@ -74,7 +74,7 @@ const Setting: React.FC = () => {
           display_name: authUser.display_name || authUser.username || "",
           username: authUser.username || "",
         };
-        
+
         setUser(completeUser);
         setDisplayName(completeUser.display_name);
         setEmail(authUser.email || "");

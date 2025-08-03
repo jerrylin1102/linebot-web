@@ -91,10 +91,8 @@ const EmailVerification = () => {
               <XCircle className="w-12 h-12 text-red-500" />
             </div>
             <h2 className="text-2xl font-bold text-red-600 mb-4">驗證失敗</h2>
-            <p className="text-gray-600 text-center mb-4">
-              {message}
-            </p>
-            
+            <p className="text-gray-600 text-center mb-4">{message}</p>
+
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
               <div className="text-sm text-amber-800">
                 <p className="font-medium mb-2">💡 可能的解決方法：</p>
@@ -106,7 +104,7 @@ const EmailVerification = () => {
                 </ul>
               </div>
             </div>
-            
+
             <div className="space-y-4 w-full">
               <Button
                 onClick={() => window.location.reload()}
@@ -127,7 +125,7 @@ const EmailVerification = () => {
                 返回登入頁面
               </Button>
             </div>
-            
+
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
                 如果問題持續存在，請聯繫我們的客服團隊尋求協助

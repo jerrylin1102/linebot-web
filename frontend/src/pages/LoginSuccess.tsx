@@ -35,15 +35,15 @@ const LoginSuccess: React.FC = () => {
         // 保存 token 和用戶資料
         console.log("從 URL 參數獲取 token，保存到 localStorage");
         authManager.setTokenInfo(
-          { access_token: urlToken, token_type: 'Bearer' },
-          'line'
+          { access_token: urlToken, token_type: "Bearer" },
+          "line"
         );
 
         if (urlUsername) {
           authManager.setUserInfo({
             username: urlUsername,
             email: urlEmail || "",
-            login_type: 'line'
+            login_type: "line",
           });
           console.log("用戶資料已保存");
         }

@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import DragDropProvider from './DragDropProvider';
-import Workspace from './Workspace';
-import ProjectManager from './ProjectManager';
-import SaveStatusIndicator, { SaveStatus } from './SaveStatusIndicator';
-import { Button } from '../ui/button';
-import { UnifiedBlock } from '../../types/block';
-import { migrateBlocks } from '../../utils/blockCompatibility';
-import VisualEditorApi from '../../services/visualEditorApi';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import DragDropProvider from "./DragDropProvider";
+import Workspace from "./Workspace";
+import ProjectManager from "./ProjectManager";
+import SaveStatusIndicator from "./SaveStatusIndicator";
+import { SaveStatus } from "../../types/saveStatus";
+import { Button } from "../ui/button";
+import { UnifiedBlock } from "../../types/block";
+import { migrateBlocks } from "../../utils/blockCompatibility";
+import VisualEditorApi from "../../services/visualEditorApi";
 
 // 向後相容的舊格式介面
 interface LegacyBlockData {
@@ -30,29 +31,36 @@ interface ProjectData {
 
 export const VisualBotEditor: React.FC = () => {
   const navigate = useNavigate();
-  const [logicBlocks, setLogicBlocks] = useState<(UnifiedBlock | LegacyBlock)[]>([]);
-  const [flexBlocks, setFlexBlocks] = useState<(UnifiedBlock | LegacyBlock)[]>([]);
-  const [projectVersion, setProjectVersion] = useState<string>('2.0'); // 新版本使用統一積木系統
-  const [selectedBotId, setSelectedBotId] = useState<string>('');
-  const [selectedLogicTemplateId, setSelectedLogicTemplateId] = useState<string>('');
-  const [selectedFlexMessageId, setSelectedFlexMessageId] = useState<string>('');
+  const [logicBlocks, setLogicBlocks] = useState<
+    (UnifiedBlock | LegacyBlock)[]
+  >([]);
+  const [flexBlocks, setFlexBlocks] = useState<(UnifiedBlock | LegacyBlock)[]>(
+    []
+  );
+  const [projectVersion, setProjectVersion] = useState<string>("2.0"); // 新版本使用統一積木系統
+  const [selectedBotId, setSelectedBotId] = useState<string>("");
+  const [selectedLogicTemplateId, setSelectedLogicTemplateId] =
+    useState<string>("");
+  const [selectedFlexMessageId, setSelectedFlexMessageId] =
+    useState<string>("");
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [currentLogicTemplateName, setCurrentLogicTemplateName] = useState<string>('');
-  const [currentFlexMessageName, setCurrentFlexMessageName] = useState<string>('');
+  const [currentLogicTemplateName, setCurrentLogicTemplateName] =
+    useState<string>("");
+  const [currentFlexMessageName, setCurrentFlexMessageName] =
+    useState<string>("");
 
   // 延遲儲存相關狀態
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(SaveStatus.SAVED);
   const [lastSavedTime, setLastSavedTime] = useState<Date | undefined>();
-  const [saveError, setSaveError] = useState<string>('');
+  const [saveError, setSaveError] = useState<string>("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
 
   // 標記為有未儲存變更
   const markAsChanged = useCallback(() => {
     if (saveStatus !== SaveStatus.PENDING) {
       setSaveStatus(SaveStatus.PENDING);
       setHasUnsavedChanges(true);
-      setSaveError('');
+      setSaveError("");
     }
   }, [saveStatus]);
 
@@ -60,7 +68,7 @@ export const VisualBotEditor: React.FC = () => {
   const handleGoBack = () => {
     // 如果有未儲存的變更，先嘗試儲存
     if (hasUnsavedChanges) {
-      if (confirm('您有未儲存的變更，確定要離開嗎？變更將會遺失。')) {
+      if (confirm("您有未儲存的變更，確定要離開嗎？變更將會遺失。")) {
         navigate(-1);
       }
     } else {
@@ -76,29 +84,27 @@ export const VisualBotEditor: React.FC = () => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         event.preventDefault();
-        event.returnValue = '您有未儲存的變更，確定要離開嗎？';
-        return '您有未儲存的變更，確定要離開嗎？';
+        event.returnValue = "您有未儲存的變更，確定要離開嗎？";
+        return "您有未儲存的變更，確定要離開嗎？";
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [hasUnsavedChanges]);
-
-
 
   // 處理 Bot 選擇變更
   const handleBotSelect = async (botId: string) => {
     setSelectedBotId(botId);
     // 清空邏輯模板和 FlexMessage 選擇
-    setSelectedLogicTemplateId('');
-    setSelectedFlexMessageId('');
-    setCurrentLogicTemplateName('');
-    setCurrentFlexMessageName('');
-    
+    setSelectedLogicTemplateId("");
+    setSelectedFlexMessageId("");
+    setCurrentLogicTemplateName("");
+    setCurrentFlexMessageName("");
+
     if (botId && VisualEditorApi.isValidBotId(botId)) {
       // 清空當前積木，等待用戶選擇邏輯模板和 FlexMessage
       setLogicBlocks([]);
@@ -113,100 +119,103 @@ export const VisualBotEditor: React.FC = () => {
   // 處理邏輯模板選擇變更
   const handleLogicTemplateSelect = async (templateId: string) => {
     setSelectedLogicTemplateId(templateId);
-    
+
     if (templateId) {
       setIsLoadingData(true);
       try {
         const template = await VisualEditorApi.getLogicTemplate(templateId);
         setLogicBlocks(template.logic_blocks || []);
         setCurrentLogicTemplateName(template.name);
-        
+
         // 重置儲存狀態為已儲存（剛載入的數據）
         setSaveStatus(SaveStatus.SAVED);
         setHasUnsavedChanges(false);
-        setSaveError('');
+        setSaveError("");
         setLastSavedTime(new Date(template.updated_at));
-        
+
         console.log(`已載入邏輯模板 ${template.name} 的數據`);
       } catch (error) {
         console.error("Error occurred:", error);
         setLogicBlocks([]);
-        setCurrentLogicTemplateName('');
+        setCurrentLogicTemplateName("");
         setSaveStatus(SaveStatus.ERROR);
-        setSaveError('載入邏輯模板失敗');
+        setSaveError("載入邏輯模板失敗");
       } finally {
         setIsLoadingData(false);
       }
     } else {
       setLogicBlocks([]);
-      setCurrentLogicTemplateName('');
+      setCurrentLogicTemplateName("");
       setSaveStatus(SaveStatus.SAVED);
       setHasUnsavedChanges(false);
-      setSaveError('');
+      setSaveError("");
     }
   };
 
   // 處理 FlexMessage 選擇變更
   const handleFlexMessageSelect = async (messageId: string) => {
     setSelectedFlexMessageId(messageId);
-    
+
     if (messageId) {
       setIsLoadingData(true);
       try {
         const messages = await VisualEditorApi.getUserFlexMessages();
-        const message = messages.find(m => m.id === messageId);
+        const message = messages.find((m) => m.id === messageId);
         if (message && message.content && message.content.blocks) {
           setFlexBlocks(message.content.blocks || []);
           setCurrentFlexMessageName(message.name);
-          
+
           // 重置儲存狀態為已儲存（剛載入的數據）
           setSaveStatus(SaveStatus.SAVED);
           setHasUnsavedChanges(false);
-          setSaveError('');
+          setSaveError("");
           setLastSavedTime(new Date(message.updated_at));
-          
+
           console.log(`已載入 FlexMessage ${message.name} 的數據`);
         } else {
           setFlexBlocks([]);
-          setCurrentFlexMessageName(message?.name || '');
+          setCurrentFlexMessageName(message?.name || "");
           setSaveStatus(SaveStatus.SAVED);
           setHasUnsavedChanges(false);
         }
       } catch (error) {
         console.error("Error occurred:", error);
         setFlexBlocks([]);
-        setCurrentFlexMessageName('');
+        setCurrentFlexMessageName("");
         setSaveStatus(SaveStatus.ERROR);
-        setSaveError('載入 FlexMessage 失敗');
+        setSaveError("載入 FlexMessage 失敗");
       } finally {
         setIsLoadingData(false);
       }
     } else {
       setFlexBlocks([]);
-      setCurrentFlexMessageName('');
+      setCurrentFlexMessageName("");
       setSaveStatus(SaveStatus.SAVED);
       setHasUnsavedChanges(false);
-      setSaveError('');
+      setSaveError("");
     }
   };
 
   // 創建新邏輯模板
   const handleLogicTemplateCreate = async (name: string) => {
     if (!selectedBotId) {
-      throw new Error('請先選擇一個 Bot');
+      throw new Error("請先選擇一個 Bot");
     }
 
     try {
-      const template = await VisualEditorApi.createLogicTemplate(selectedBotId, {
-        name,
-        description: `由視覺化編輯器創建的邏輯模板`,
-        logic_blocks: [],
-        is_active: 'false'
-      });
-      
+      const template = await VisualEditorApi.createLogicTemplate(
+        selectedBotId,
+        {
+          name,
+          description: `由視覺化編輯器創建的邏輯模板`,
+          logic_blocks: [],
+          is_active: "false",
+        }
+      );
+
       // 自動選擇新創建的邏輯模板
       await handleLogicTemplateSelect(template.id);
-      console.log('邏輯模板創建成功:', template);
+      console.log("邏輯模板創建成功:", template);
     } catch (_error) {
       console.error("Error occurred:", _error);
       throw error;
@@ -218,12 +227,12 @@ export const VisualBotEditor: React.FC = () => {
     try {
       const message = await VisualEditorApi.createFlexMessage({
         name,
-        content: { blocks: [] }
+        content: { blocks: [] },
       });
-      
+
       // 自動選擇新創建的 FlexMessage
       await handleFlexMessageSelect(message.id);
-      console.log('FlexMessage 創建成功:', message);
+      console.log("FlexMessage 創建成功:", message);
     } catch (_error) {
       console.error("Error occurred:", _error);
       throw error;
@@ -231,14 +240,17 @@ export const VisualBotEditor: React.FC = () => {
   };
 
   // 儲存邏輯模板
-  const handleLogicTemplateSave = async (templateId: string, data: { logicBlocks: (UnifiedBlock | LegacyBlock)[], generatedCode: string }) => {
+  const handleLogicTemplateSave = async (
+    templateId: string,
+    data: { logicBlocks: (UnifiedBlock | LegacyBlock)[]; generatedCode: string }
+  ) => {
     try {
       setSaveStatus(SaveStatus.SAVING);
-      setSaveError('');
-      
+      setSaveError("");
+
       // 確保所有積木都是統一格式
-      const normalizedLogicBlocks = data.logicBlocks.map(block => {
-        if ('category' in block) {
+      const normalizedLogicBlocks = data.logicBlocks.map((block) => {
+        if ("category" in block) {
           return block as UnifiedBlock;
         } else {
           const legacyBlock = block as LegacyBlock;
@@ -248,9 +260,9 @@ export const VisualBotEditor: React.FC = () => {
 
       await VisualEditorApi.updateLogicTemplate(templateId, {
         logic_blocks: normalizedLogicBlocks,
-        generated_code: data.generatedCode
+        generated_code: data.generatedCode,
       });
-      
+
       setSaveStatus(SaveStatus.SAVED);
       setLastSavedTime(new Date());
       setHasUnsavedChanges(false);
@@ -258,20 +270,23 @@ export const VisualBotEditor: React.FC = () => {
     } catch (error) {
       console.error("Error occurred:", error);
       setSaveStatus(SaveStatus.ERROR);
-      setSaveError(error instanceof Error ? error.message : '儲存失敗');
+      setSaveError(error instanceof Error ? error.message : "儲存失敗");
       throw error;
     }
   };
 
   // 儲存 FlexMessage
-  const handleFlexMessageSave = async (messageId: string, data: { flexBlocks: (UnifiedBlock | LegacyBlock)[] }) => {
+  const handleFlexMessageSave = async (
+    messageId: string,
+    data: { flexBlocks: (UnifiedBlock | LegacyBlock)[] }
+  ) => {
     try {
       setSaveStatus(SaveStatus.SAVING);
-      setSaveError('');
-      
+      setSaveError("");
+
       // 確保所有積木都是統一格式
-      const normalizedFlexBlocks = data.flexBlocks.map(block => {
-        if ('category' in block) {
+      const normalizedFlexBlocks = data.flexBlocks.map((block) => {
+        if ("category" in block) {
           return block as UnifiedBlock;
         } else {
           const legacyBlock = block as LegacyBlock;
@@ -280,9 +295,9 @@ export const VisualBotEditor: React.FC = () => {
       });
 
       await VisualEditorApi.updateFlexMessage(messageId, {
-        content: { blocks: normalizedFlexBlocks }
+        content: { blocks: normalizedFlexBlocks },
       });
-      
+
       setSaveStatus(SaveStatus.SAVED);
       setLastSavedTime(new Date());
       setHasUnsavedChanges(false);
@@ -290,20 +305,27 @@ export const VisualBotEditor: React.FC = () => {
     } catch (error) {
       console.error("Error occurred:", error);
       setSaveStatus(SaveStatus.ERROR);
-      setSaveError(error instanceof Error ? error.message : '儲存失敗');
+      setSaveError(error instanceof Error ? error.message : "儲存失敗");
       throw error;
     }
   };
 
   // 處理儲存到 Bot
-  const handleSaveToBot = async (botId: string, data: { logicBlocks: (UnifiedBlock | LegacyBlock)[], flexBlocks: (UnifiedBlock | LegacyBlock)[], generatedCode: string }) => {
+  const handleSaveToBot = async (
+    botId: string,
+    data: {
+      logicBlocks: (UnifiedBlock | LegacyBlock)[];
+      flexBlocks: (UnifiedBlock | LegacyBlock)[];
+      generatedCode: string;
+    }
+  ) => {
     try {
       setSaveStatus(SaveStatus.SAVING);
-      setSaveError('');
-      
+      setSaveError("");
+
       // 確保所有積木都是統一格式
-      const normalizedLogicBlocks = data.logicBlocks.map(block => {
-        if ('category' in block) {
+      const normalizedLogicBlocks = data.logicBlocks.map((block) => {
+        if ("category" in block) {
           return block as UnifiedBlock;
         } else {
           // 這應該不會發生，因為我們已經做了遷移，但為了安全起見
@@ -312,8 +334,8 @@ export const VisualBotEditor: React.FC = () => {
         }
       });
 
-      const normalizedFlexBlocks = data.flexBlocks.map(block => {
-        if ('category' in block) {
+      const normalizedFlexBlocks = data.flexBlocks.map((block) => {
+        if ("category" in block) {
           return block as UnifiedBlock;
         } else {
           const legacyBlock = block as LegacyBlock;
@@ -324,9 +346,9 @@ export const VisualBotEditor: React.FC = () => {
       await VisualEditorApi.saveVisualEditorData(botId, {
         logic_blocks: normalizedLogicBlocks,
         flex_blocks: normalizedFlexBlocks,
-        generated_code: data.generatedCode
+        generated_code: data.generatedCode,
       });
-      
+
       setSaveStatus(SaveStatus.SAVED);
       setLastSavedTime(new Date());
       setHasUnsavedChanges(false);
@@ -334,32 +356,36 @@ export const VisualBotEditor: React.FC = () => {
     } catch (error) {
       console.error("Error occurred:", error);
       setSaveStatus(SaveStatus.ERROR);
-      setSaveError(error instanceof Error ? error.message : '儲存失敗');
+      setSaveError(error instanceof Error ? error.message : "儲存失敗");
       throw error; // 重新拋出錯誤，讓 ProjectManager 處理
     }
   };
 
   const handleImportProject = (projectData: ProjectData) => {
     // 檢查匯入的專案版本
-    if (!projectData.version || projectData.version < '2.0') {
-      console.log('匯入舊版本專案，正在升級...');
-      
-      const migratedLogicBlocks = migrateBlocks(projectData.logicBlocks as LegacyBlock[]);
-      const migratedFlexBlocks = migrateBlocks(projectData.flexBlocks as LegacyBlock[]);
-      
+    if (!projectData.version || projectData.version < "2.0") {
+      console.log("匯入舊版本專案，正在升級...");
+
+      const migratedLogicBlocks = migrateBlocks(
+        projectData.logicBlocks as LegacyBlock[]
+      );
+      const migratedFlexBlocks = migrateBlocks(
+        projectData.flexBlocks as LegacyBlock[]
+      );
+
       setLogicBlocks(migratedLogicBlocks);
       setFlexBlocks(migratedFlexBlocks);
-      setProjectVersion('2.0');
+      setProjectVersion("2.0");
     } else {
       setLogicBlocks(projectData.logicBlocks || []);
       setFlexBlocks(projectData.flexBlocks || []);
-      setProjectVersion(projectData.version || '2.0');
+      setProjectVersion(projectData.version || "2.0");
     }
-    
+
     // 重置儲存狀態
     setSaveStatus(SaveStatus.PENDING);
     setHasUnsavedChanges(true);
-    setSaveError('');
+    setSaveError("");
     setLastSavedTime(undefined);
   };
 
@@ -370,7 +396,7 @@ export const VisualBotEditor: React.FC = () => {
       isInitialLoadRef.current = false;
       return;
     }
-    
+
     // 如果不是正在載入數據且有積木，才標記為變更
     if (!isLoadingData && (logicBlocks.length > 0 || flexBlocks.length > 0)) {
       markAsChanged();
@@ -380,7 +406,7 @@ export const VisualBotEditor: React.FC = () => {
   // 初始化組件
   useEffect(() => {
     // 組件初始化時為空狀態，等待用戶選擇 Bot
-    console.log('視覺化編輯器已載入，請選擇一個 Bot 開始編輯');
+    console.log("視覺化編輯器已載入，請選擇一個 Bot 開始編輯");
   }, []);
 
   return (
@@ -391,8 +417,8 @@ export const VisualBotEditor: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* 返回按鈕 */}
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={handleGoBack}
                 className="text-gray-600 hover:text-gray-800"
@@ -400,7 +426,7 @@ export const VisualBotEditor: React.FC = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              
+
               <h1 className="text-xl font-semibold text-gray-800">
                 LINE Bot 視覺化編輯器
               </h1>
@@ -408,15 +434,15 @@ export const VisualBotEditor: React.FC = () => {
                 <div className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                   v{projectVersion} - 統一積木系統
                 </div>
-                <SaveStatusIndicator 
+                <SaveStatusIndicator
                   status={saveStatus}
                   lastSavedTime={lastSavedTime}
                   errorMessage={saveError}
                 />
               </div>
             </div>
-            
-            <ProjectManager 
+
+            <ProjectManager
               logicBlocks={logicBlocks}
               flexBlocks={flexBlocks}
               onImport={handleImportProject}
@@ -426,7 +452,7 @@ export const VisualBotEditor: React.FC = () => {
             />
           </div>
         </header>
-        
+
         {/* Main Content */}
         <div className="flex-1 overflow-hidden relative">
           {isLoadingData && (
@@ -437,8 +463,8 @@ export const VisualBotEditor: React.FC = () => {
               </div>
             </div>
           )}
-          
-          <Workspace 
+
+          <Workspace
             logicBlocks={logicBlocks}
             flexBlocks={flexBlocks}
             onLogicBlocksChange={setLogicBlocks}

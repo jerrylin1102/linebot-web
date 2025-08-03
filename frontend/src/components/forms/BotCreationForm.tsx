@@ -135,7 +135,9 @@ const AddServerPage = () => {
 
       // 2秒後跳轉到區塊設定頁面
       setTimeout(() => {
-        navigate(`/bots/editor?botId=${createdBot.id}&botName=${encodeURIComponent(createdBot.name)}`);
+        navigate(
+          `/bots/editor?botId=${createdBot.id}&botName=${encodeURIComponent(createdBot.name)}`
+        );
       }, 2000);
     }
   };

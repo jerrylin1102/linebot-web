@@ -4,7 +4,7 @@
  * 移除時間: 2025-09-20
  */
 
-console.warn('⚠️ AuthenticationService.ts 已廢棄，請遷移到 UnifiedAuthManager');
+console.warn("⚠️ AuthenticationService.ts 已廢棄，請遷移到 UnifiedAuthManager");
 
 import { API_CONFIG, getApiUrl } from "../config/apiConfig";
 import { AuthService } from "./auth";

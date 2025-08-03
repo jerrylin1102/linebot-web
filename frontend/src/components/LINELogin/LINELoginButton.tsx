@@ -7,7 +7,9 @@ interface LINELoginButtonProps {
   onLogin?: () => void;
 }
 
-const LINELoginButton: React.FC<LINELoginButtonProps> = ({ onLogin: _onLogin }) => {
+const LINELoginButton: React.FC<LINELoginButtonProps> = ({
+  onLogin: _onLogin,
+}) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 

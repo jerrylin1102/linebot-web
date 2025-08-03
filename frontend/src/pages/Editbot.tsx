@@ -8,12 +8,14 @@ import BotEditModal from "../components/Editbot/BotEditModal";
 const Editbot = () => {
   const { user, loading, error } = useUnifiedAuth({
     requireAuth: true,
-    redirectTo: "/login"
+    redirectTo: "/login",
   });
 
   const [editingBotId, setEditingBotId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editType, setEditType] = useState<"name" | "token" | "secret" | "all">("name");
+  const [editType, setEditType] = useState<"name" | "token" | "secret" | "all">(
+    "name"
+  );
   const mybotRef = useRef<MybotRef>(null);
 
   if (loading) {

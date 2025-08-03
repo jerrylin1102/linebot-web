@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Copy, Download, Eye } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Button } from "../ui/button";
+import { Copy, Download, Eye } from "lucide-react";
 
 interface BlockData {
   [key: string]: unknown;
@@ -23,42 +23,42 @@ class FlexMessageGenerator {
       body: {
         type: "box",
         layout: "vertical",
-        contents: []
-      }
+        contents: [],
+      },
     };
 
-    blocks.forEach(block => {
-      if (block.blockType === 'flex-content') {
+    blocks.forEach((block) => {
+      if (block.blockType === "flex-content") {
         switch (block.blockData.contentType) {
-          case 'text':
+          case "text":
             bubble.body.contents.push({
               type: "text",
               text: block.blockData.text || "示例文字",
               size: block.blockData.size || "md",
               weight: block.blockData.weight || "regular",
-              color: block.blockData.color || "#000000"
+              color: block.blockData.color || "#000000",
             });
             break;
-          case 'image':
+          case "image":
             bubble.body.contents.push({
               type: "image",
-              url: block.blockData.url || "https://via.placeholder.com/300x200"
+              url: block.blockData.url || "https://via.placeholder.com/300x200",
             });
             break;
-          case 'button':
+          case "button":
             bubble.body.contents.push({
               type: "button",
               action: {
                 type: "message",
                 label: block.blockData.text || "按鈕",
-                text: block.blockData.text || "按鈕被點擊"
-              }
+                text: block.blockData.text || "按鈕被點擊",
+              },
             });
             break;
-          case 'separator':
+          case "separator":
             bubble.body.contents.push({
               type: "separator",
-              margin: "md"
+              margin: "md",
             });
             break;
         }
@@ -73,44 +73,48 @@ class FlexMessageGenerator {
       return '<div class="text-gray-500 text-center py-8">請加入 Flex 組件來設計您的訊息</div>';
     }
 
-    let html = '<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm" style="max-width: 300px;">';
-    
+    let html =
+      '<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm" style="max-width: 300px;">';
+
     flexMessage.body.contents.forEach((content: Record<string, unknown>) => {
       switch (content.type) {
-        case 'text':
+        case "text":
           html += `<div class="mb-2" style="color: ${content.color}; font-size: ${this.getSizeInPx(content.size)}; font-weight: ${content.weight}">${content.text}</div>`;
           break;
-        case 'image':
+        case "image":
           html += `<img src="${content.url}" class="w-full rounded mb-2" style="max-height: 200px; object-fit: cover;" />`;
           break;
-        case 'button':
+        case "button":
           html += `<button class="w-full bg-blue-500 text-white py-2 px-4 rounded mb-2 hover:bg-blue-600">${content.action.label}</button>`;
           break;
-        case 'separator':
+        case "separator":
           html += '<hr class="my-2 border-gray-300" />';
           break;
       }
     });
 
-    html += '</div>';
+    html += "</div>";
     return html;
   }
 
   private getSizeInPx(size: string): string {
     const sizeMap: { [key: string]: string } = {
-      'xs': '12px',
-      'sm': '14px',
-      'md': '16px',
-      'lg': '18px',
-      'xl': '20px'
+      xs: "12px",
+      sm: "14px",
+      md: "16px",
+      lg: "18px",
+      xl: "20px",
     };
-    return sizeMap[size] || '16px';
+    return sizeMap[size] || "16px";
   }
 }
 
 const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks }) => {
-  const [flexMessage, setFlexMessage] = useState<Record<string, unknown> | null>(null);
-  const [previewHTML, setPreviewHTML] = useState('');
+  const [flexMessage, setFlexMessage] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  const [previewHTML, setPreviewHTML] = useState("");
   const [generator] = useState(new FlexMessageGenerator());
 
   useEffect(() => {
@@ -120,7 +124,9 @@ const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks }) => {
       setPreviewHTML(generator.generatePreviewHTML(generated));
     } else {
       setFlexMessage(null);
-      setPreviewHTML('<div class="text-gray-500 text-center py-8">請加入 Flex 組件來設計您的訊息</div>');
+      setPreviewHTML(
+        '<div class="text-gray-500 text-center py-8">請加入 Flex 組件來設計您的訊息</div>'
+      );
     }
   }, [blocks, generator]);
 
@@ -132,11 +138,13 @@ const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks }) => {
 
   const downloadFlexMessage = () => {
     if (flexMessage) {
-      const blob = new Blob([JSON.stringify(flexMessage, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(flexMessage, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'flex-message.json';
+      a.download = "flex-message.json";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -162,21 +170,23 @@ const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks }) => {
           </Button>
         </div>
       </div>
-      
+
       {/* 預覽區域 */}
       <div className="flex-1 bg-gray-50 rounded-lg p-4 overflow-auto">
         <div className="max-w-sm mx-auto">
-          <div 
+          <div
             className="flex-message-preview"
             dangerouslySetInnerHTML={{ __html: previewHTML }}
           />
         </div>
       </div>
-      
+
       {/* JSON 預覽 */}
       {flexMessage && (
         <div className="mt-4 border-t pt-4">
-          <h4 className="text-sm font-medium text-gray-600 mb-2">Flex Message JSON:</h4>
+          <h4 className="text-sm font-medium text-gray-600 mb-2">
+            Flex Message JSON:
+          </h4>
           <div className="bg-gray-900 rounded p-3 max-h-32 overflow-auto">
             <pre className="text-green-400 text-xs font-mono">
               {JSON.stringify(flexMessage, null, 2)}
@@ -184,7 +194,7 @@ const FlexMessagePreview: React.FC<FlexMessagePreviewProps> = ({ blocks }) => {
           </div>
         </div>
       )}
-      
+
       <div className="mt-2 text-xs text-gray-500">
         💡 這個預覽模擬了 LINE 中 Flex Message 的外觀
       </div>

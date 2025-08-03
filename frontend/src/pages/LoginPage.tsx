@@ -21,9 +21,11 @@ const LoginPage = () => {
     useState(false);
 
   const navigate = useNavigate();
-  const { login, loading, error, clearError, handleLineLogin } = useUnifiedAuth({
-    redirectTo: "/login"
-  });
+  const { login, loading, error, clearError, handleLineLogin } = useUnifiedAuth(
+    {
+      redirectTo: "/login",
+    }
+  );
 
   useEffect(() => {
     if (authManager.isAuthenticatedSync()) {
@@ -39,16 +41,16 @@ const LoginPage = () => {
     }
 
     clearError(); // 清除之前的錯誤
-    
+
     const success = await login(username, password, rememberMe);
-    
+
     if (success) {
       // 檢查是否需要郵件驗證
       if (error && error.includes("電子郵件")) {
         setShowEmailVerificationPrompt(true);
         return;
       }
-      
+
       // 登入成功，重定向到儀表板
       navigate("/dashboard", { replace: true });
     }
@@ -63,11 +65,11 @@ const LoginPage = () => {
     // 由於 LINE 登錄是重定向流程，我們需要將 rememberMe 狀態存在某個地方
     // 這裡先將狀態存在 sessionStorage，在登錄成功後讀取
     if (rememberMe) {
-      sessionStorage.setItem('line_login_remember_me', 'true');
+      sessionStorage.setItem("line_login_remember_me", "true");
     } else {
-      sessionStorage.removeItem('line_login_remember_me');
+      sessionStorage.removeItem("line_login_remember_me");
     }
-    
+
     // 觸發 LINE 登錄
     await handleLineLogin();
   };
@@ -143,7 +145,10 @@ const LoginPage = () => {
         <Separator className="flex-1" />
       </div>
 
-      <LINELoginButton onClick={handleLINELoginWithRememberMe} disabled={loading} />
+      <LINELoginButton
+        onClick={handleLINELoginWithRememberMe}
+        disabled={loading}
+      />
 
       <p className="text-center text-sm text-muted-foreground mt-4">
         還沒有帳號？{" "}
